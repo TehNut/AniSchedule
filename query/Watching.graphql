@@ -1,0 +1,10 @@
+query($watched: [Int!] = [0]) {
+  Page {
+    media(id_in: $watched) {
+      status
+      title {
+        romaji
+      }
+    }
+  }
+}
