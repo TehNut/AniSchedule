@@ -15,6 +15,10 @@ query($page: Int = 0, $watched: [Int!]!, $nextDay: Int!) {
           large
           color
         }
+        externalLinks {
+          site
+          url
+        }
       }
       episode
       airingAt
