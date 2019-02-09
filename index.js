@@ -132,7 +132,7 @@ function query(query, variables, callback) {
 }
 
 function getTomorrow() {
-  return new Date(new Date().getTime() + (24 * 60 * 60 * 1000 * 7));
+  return new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
 }
 
 function getAllWatched() {
