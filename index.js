@@ -146,7 +146,12 @@ function getAllWatched() {
 const commands = {
   watch: {
     handle(message, args, data) {
-      let channelData = data.channels[message.channel.id] || { shows: [] };
+      if (!checkModifyPermission(message)) {
+        message.react("👎");
+        return;
+      }
+
+      let channelData = data[message.channel.id] || { shows: [] };
       let watched = channelData.shows || [];
       let watchId = parseInt(args[0]);
       if (!watchId || watched.includes(watchId)) {
@@ -162,7 +167,12 @@ const commands = {
   },
   unwatch: {
     handle(message, args, data) {
-      let channelData = data.channels[message.channel.id];
+      if (!checkModifyPermission(message)) {
+        message.react("👎");
+        return;
+      }
+
+      let channelData = data[message.channel.id];
       if (!channelData || !channelData.shows || channelData.shows.length === 0) {
         message.react("🤷");
         return;
@@ -174,7 +184,7 @@ const commands = {
         return;
       }
       channelData.shows = channelData.shows.filter(id => id !== watchId);
-      data.channels[message.channel.id] = channelData;
+      data[message.channel.id] = channelData;
       message.react("👍");
       return data;
     }
@@ -200,3 +210,14 @@ const commands = {
     }
   },
 };
+
+function checkModifyPermission(message) {
+  switch (process.env.PERMISSION_TYPE) {
+    case "CHANNEL_MANAGER":
+      return message.channel.permissionsFor(message.author).has("MANAGE_CHANNELS");
+    case "SERVER_OWNER":
+      return message.author.id === message.guild.ownerID;
+    default:
+      return true;
+  }
+}
