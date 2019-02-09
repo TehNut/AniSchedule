@@ -9,47 +9,60 @@ sends a message when a new episode has aired.
 
 Make sure you have [Node.js](https://nodejs.org/) installed.
 
-Create a new `.env` file with the following properties:
+Run these commands to get the project locally:
+
+```sh
+git clone https://github.com/TehNut/AniSchedule.git # or clone your own fork
+cd AniSchedule
+npm install
+```
+
+Create a new `.env` file in the root directory of the project (the same directory `index.js` is in) with the following properties:
 
 ```
 BOT_TOKEN=$TOKEN
 COMMAND_PREFIX=$PREFIX
+PERMISSION_TYPE=$PERMISSION
 ```
 
 `$TOKEN` should be the bot token obtained from [Discord's developer panel](https://discordapp.com/developers/).
 
 `$PREFIX` should be a string required before the command name. If unset, `!` will be used.
 
-```sh
-git clone https://github.com/TehNut/AniSchedule.git # or clone your own fork
-cd AniSchedule
-npm install
-npm start
-```
+`$PERMISSION` defines which users can add/remove watches. It should be one of the following: 
 
+  * `ANY` 
+  
+    Anybody can modify
+    
+  * `CHANNEL_MANAGER` 
+  
+    Users with the "Manage Channel" permission will be able to modify
+    
+  * `SERVER_OWNER` 
+    
+    Only the server owner can modify
+
+Finally, run `npm start` to start the bot.
 
 ## Commands
 
 Commands should be prefixed by the prefix set in the `.env` file.
 
-eg: If your prefix is `?as`, the command would be `?aschannel`.
-
-* `channel`
-
-  This command sets the channel for announcements to be sent. It can only be used by the server owner and should be used
-  in the channel you want.
+eg: If your prefix is `?as`, the command would be `?aswatch`.
   
 * `watch`
 
   This command adds a new anime to watch for new episodes of. It takes the AniList media ID of the anime which can be obtained
-  from the series URL. It can be used by anybody.
+  from the series URL. Whatever channel this is used in is the channel the announcements will be made in. This follows the 
+  permission level set in the `.env` file.
   
   eg: In the URL `https://anilist.co/anime/99263/Tate-no-Yuusha-no-Nariagari/`, the ID is `99263`.
 
 * `unwatch`
 
-  This command removes an anime from the list. Just as with the `watch` command, it takes the AniList media ID. It can be
-  used by anybody.
+  This command removes an anime from the list. Just as with the `watch` command, it takes the AniList media ID. Must be 
+  used in the channel that the watch was added to. This follows the permission level set in the `.env` file.
 
 * `watching`
   
