@@ -67,7 +67,7 @@ function handleSchedules(time, page) {
     res.data.Page.airingSchedules.forEach(e => {
       let date = new Date(e.airingAt * 1000);
       console.log(`Scheduling announcement for ${e.media.title.romaji} at ${date}`);
-      // setTimeout(() => {
+      setTimeout(() => {
         let description = `Episode ${e.episode} of [${e.media.title.romaji}](${e.media.siteUrl}) has just aired.`;
         if (e.media.externalLinks) {
           description += "\n\nWatch: ";
@@ -95,15 +95,20 @@ function handleSchedules(time, page) {
         };
 
         Object.values(data).forEach(serverData => {
-          if (serverData.watched.includes(e.media.id)) {
-            let channel = client.channels.find(v => v.id === serverData.channel);
-            if (channel) {
-              console.log(`Announcing episode ${e.media.title.romaji} to ${serverData.channel}`);
-              channel.send({embed});
+          Object.entries(serverData).forEach(([channelId, channelData]) => {
+            if (!channelData.shows || channelData.shows.length === 0)
+              return;
+
+            if (channelData.shows.includes(e.media.id)) {
+              let channel = client.channels.find(v => v.id === channelId);
+              if (channel) {
+                console.log(`Announcing episode ${e.media.title.romaji} to ${channel.guild.name}@${channel.id}`);
+                channel.send({embed});
+              }
             }
-          }
+          });
         });
-      // }, e.timeUntilAiring * 1000);
+      }, e.timeUntilAiring * 1000);
     });
 
     // Gather any other pages
@@ -127,60 +132,62 @@ function query(query, variables, callback) {
 }
 
 function getTomorrow() {
-  return new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
+  return new Date(new Date().getTime() + (24 * 60 * 60 * 1000 * 7));
 }
 
 function getAllWatched() {
   let watched = [];
-  Object.values(data).forEach(e => {
-    watched.push(e.watched);
+  Object.values(data).forEach(server => {
+    Object.values(server).filter(c => c.shows).forEach(c => c.shows.forEach(s => watched.push(s)));
   });
   return [...flatten(watched)];
 }
 
 const commands = {
-  channel: {
-    handle(message, args, data) {
-      if (message.guild.owner.id !== message.author.id) {
-        message.react("👎");
-        return;
-      }
-      data.channel = message.channel.id;
-      message.react("👍");
-      return data;
-    }
-  },
   watch: {
     handle(message, args, data) {
-      let watched = data.watched || [];
+      let channelData = data.channels[message.channel.id] || { shows: [] };
+      let watched = channelData.shows || [];
       let watchId = parseInt(args[0]);
       if (!watchId || watched.includes(watchId)) {
         message.react("👎");
         return;
       }
       watched.push(watchId);
-      data.watched = watched;
+      channelData.shows = watched;
+      data[message.channel.id] = channelData;
       message.react("👍");
       return data;
     }
   },
   unwatch: {
     handle(message, args, data) {
-      let watched = data.watched || [];
+      let channelData = data.channels[message.channel.id];
+      if (!channelData || !channelData.shows || channelData.shows.length === 0) {
+        message.react("🤷");
+        return;
+      }
+
       let watchId = parseInt(args[0]);
-      if (!watchId || !watched.includes(watchId)) {
+      if (!watchId || !channelData.shows.includes(watchId)) {
         message.react("👎");
         return;
       }
-      watched = watched.filter(id => id !== watchId);
-      data.watched = watched;
+      channelData.shows = channelData.shows.filter(id => id !== watchId);
+      data.channels[message.channel.id] = channelData;
       message.react("👍");
       return data;
     }
   },
   watching: {
     handle(message, args, data) {
-      query(requireText("./query/Watching.graphql", require), { watched: data.watched }, res => {
+      let channelData = data[message.channel.id];
+      if (!channelData || !channelData.shows || channelData.shows.length === 0) {
+        message.react("👎");
+        return;
+      }
+
+      query(requireText("./query/Watching.graphql", require), { watched: channelData.shows}, res => {
         let string = "";
         res.data.Page.media.forEach(m => {
           if (m.status !== "RELEASING")
