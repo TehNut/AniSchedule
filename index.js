@@ -17,40 +17,37 @@ const streamingSites = [
   "Viz"
 ];
 const commandPrefix = process.env.COMMAND_PREFIX || "!";
+const dataFile = "./data.json";
 let data = {};
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  if (fs.existsSync("./data.json")) {
-    data = JSON.parse(fs.readFileSync("./data.json"));
+  if (fs.existsSync(dataFile)) {
+    data = JSON.parse(fs.readFileSync(dataFile));
   } else {
-    fs.writeFileSync("./data.json", JSON.stringify({}));
+    fs.writeFileSync(dataFile, JSON.stringify({}));
   }
 
   handleSchedules(Math.round(getTomorrow().getTime() / 1000)); // Initial run
   setInterval(() => handleSchedules(Math.round(getTomorrow().getTime() / 1000)), 1000 * 60 * 60 * 24); // Schedule future runs every 24 hours
 });
-
-client.on("error", e => {
-  console.log(e);
-});
-
+client.on("error", e => console.log(e));
 client.on("message", msg => {
   if (msg.author.bot)
     return;
 
-  let msgContent = msg.content.split(" ");
+  const msgContent = msg.content.split(" ");
 
   if (msgContent[0].startsWith(commandPrefix)) {
     let command = msgContent[0].substr(commandPrefix.length);
     command = commands[command];
     if (command) {
-      let serverData = data[msg.guild.id] || {};
-      let ret = command.handle(msg, msgContent.slice(1), serverData);
+      const serverData = data[msg.guild.id] || {};
+      const ret = command.handle(msg, msgContent.slice(1), serverData);
       if (ret) {
         data[msg.guild.id] = ret;
-        fs.writeFileSync("./data.json", JSON.stringify(data));
+        fs.writeFileSync(dataFile, JSON.stringify(data));
       }
     }
   }
@@ -65,50 +62,9 @@ function handleSchedules(time, page) {
     }
 
     res.data.Page.airingSchedules.forEach(e => {
-      let date = new Date(e.airingAt * 1000);
-      console.log(`Scheduling announcement for ${e.media.title.romaji} at ${date}`);
-      setTimeout(() => {
-        let description = `Episode ${e.episode} of [${e.media.title.romaji}](${e.media.siteUrl}) has just aired.`;
-        if (e.media.externalLinks) {
-          description += "\n\nWatch: ";
-          let multipleSites = false;
-          e.media.externalLinks.forEach(site => {
-            if (streamingSites.includes(site.site)) {
-              description += `${multipleSites ? " | " : ""} [${site.site}](${site.url})`;
-              multipleSites = true;
-            }
-          });
-        }
-
-        let embed = {
-          color: parseInt(e.media.coverImage.color.substr(1), 16),
-          thumbnail: {
-            url: e.media.coverImage.large
-          },
-          author: {
-            name: "AniList",
-            url: "https://anilist.co",
-            icon_url: "https://anilist.co/img/logo_al.png"
-          },
-          description,
-          timestamp: date
-        };
-
-        Object.values(data).forEach(serverData => {
-          Object.entries(serverData).forEach(([channelId, channelData]) => {
-            if (!channelData.shows || channelData.shows.length === 0)
-              return;
-
-            if (channelData.shows.includes(e.media.id)) {
-              let channel = client.channels.find(v => v.id === channelId);
-              if (channel) {
-                console.log(`Announcing episode ${e.media.title.romaji} to ${channel.guild.name}@${channel.id}`);
-                channel.send({embed});
-              }
-            }
-          });
-        });
-      }, e.timeUntilAiring * 1000);
+      const date = new Date(e.airingAt * 1000);
+      console.log(`Scheduling announcement for ${e.media.title.romaji} on ${date}`);
+      setTimeout(() => makeAnnouncement(e, date), e.timeUntilAiring * 1000);
     });
 
     // Gather any other pages
@@ -125,8 +81,8 @@ function query(query, variables, callback) {
       "Accept": "application/json"
     },
     body: JSON.stringify({
-      query: query,
-      variables: variables
+      query,
+      variables
     })
   }).then(res => res.json()).then(res => callback(res));
 }
@@ -136,11 +92,54 @@ function getTomorrow() {
 }
 
 function getAllWatched() {
-  let watched = [];
+  const watched = [];
   Object.values(data).forEach(server => {
     Object.values(server).filter(c => c.shows).forEach(c => c.shows.forEach(s => watched.push(s)));
   });
   return [...flatten(watched)];
+}
+
+function makeAnnouncement(entry, date) {
+  let description = `Episode ${entry.episode} of [${entry.media.title.romaji}](${entry.media.siteUrl}) has just aired.`;
+  if (entry.media.externalLinks) {
+    description += "\n\nWatch: ";
+    let multipleSites = false;
+    entry.media.externalLinks.forEach(site => {
+      if (streamingSites.includes(site.site)) {
+        description += `${multipleSites ? " | " : ""} [${site.site}](${site.url})`;
+        multipleSites = true;
+      }
+    });
+  }
+
+  let embed = {
+    color: parseInt(entry.media.coverImage.color.substr(1), 16),
+    thumbnail: {
+      url: entry.media.coverImage.large
+    },
+    author: {
+      name: "AniList",
+      url: "https://anilist.co",
+      icon_url: "https://anilist.co/img/logo_al.png"
+    },
+    description,
+    timestamp: date
+  };
+
+  Object.values(data).forEach(serverData => {
+    Object.entries(serverData).forEach(([channelId, channelData]) => {
+      if (!channelData.shows || channelData.shows.length === 0)
+        return;
+
+      if (channelData.shows.includes(e.media.id)) {
+        const channel = client.channels.find(v => v.id === channelId);
+        if (channel) {
+          console.log(`Announcing episode ${e.media.title.romaji} to ${channel.guild.name}@${channel.id}`);
+          channel.send({embed});
+        }
+      }
+    });
+  });
 }
 
 const commands = {
@@ -151,9 +150,9 @@ const commands = {
         return;
       }
 
-      let channelData = data[message.channel.id] || { shows: [] };
-      let watched = channelData.shows || [];
-      let watchId = parseInt(args[0]);
+      const channelData = data[message.channel.id] || { shows: [] };
+      const watched = channelData.shows || [];
+      const watchId = parseInt(args[0]);
       if (!watchId || watched.includes(watchId)) {
         message.react("👎");
         return;
@@ -172,13 +171,13 @@ const commands = {
         return;
       }
 
-      let channelData = data[message.channel.id];
+      const channelData = data[message.channel.id];
       if (!channelData || !channelData.shows || channelData.shows.length === 0) {
         message.react("🤷");
         return;
       }
 
-      let watchId = parseInt(args[0]);
+      const watchId = parseInt(args[0]);
       if (!watchId || !channelData.shows.includes(watchId)) {
         message.react("👎");
         return;
@@ -191,7 +190,7 @@ const commands = {
   },
   watching: {
     handle(message, args, data) {
-      let channelData = data[message.channel.id];
+      const channelData = data[message.channel.id];
       if (!channelData || !channelData.shows || channelData.shows.length === 0) {
         message.react("👎");
         return;
