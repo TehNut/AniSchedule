@@ -32,7 +32,7 @@ client.on("ready", () => {
   handleSchedules(Math.round(getTomorrow().getTime() / 1000)); // Initial run
   setInterval(() => handleSchedules(Math.round(getTomorrow().getTime() / 1000)), 1000 * 60 * 60 * 24); // Schedule future runs every 24 hours
 });
-client.on("error", e => console.log(e));
+client.on("error", e => console.log(e.error));
 client.on("message", msg => {
   if (msg.author.bot)
     return;
