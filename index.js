@@ -196,19 +196,53 @@ const commands = {
         return;
       }
 
-      query(requireText("./query/Watching.graphql", require), { watched: channelData.shows}, res => {
-        let string = "";
-        res.data.Page.media.forEach(m => {
-          if (m.status !== "RELEASING")
-            return;
+      handleWatchingPage(0);
 
-          string += (string.length !== 0 ? ", " : "") + `\`${m.title.romaji}\``;
+      function handleWatchingPage(page) {
+        query(requireText("./query/Watching.graphql", require), { watched: channelData.shows, page }, res => {
+          let description = "";
+          res.data.Page.media.forEach(m => {
+            if (m.status !== "RELEASING")
+              return;
+
+            let nextLine = `\n- [${m.title.romaji}](${m.siteUrl}) (\`${m.id}\`)`;
+            if (1000 - description.length < nextLine.length) {
+              sendWatchingList(description, message.channel);
+              console.log(description.length);
+              description = "";
+            }
+
+            description += nextLine;
+          });
+          if (description.length !== 0) {
+            console.log(description.length);
+            sendWatchingList(description, message.channel);
+            return;
+          }
+
+          if (res.data.Page.pageInfo.hasNextPage) {
+            handleWatchingPage(res.data.Page.pageInfo.currentPage + 1);
+            return;
+          }
+          message.channel.send("No currently airing shows are being announced.");
         });
-        message.channel.send(string.length === 0 ? "Not watching any currently airing series." : string);
-      });
+      }
     }
   },
 };
+
+function sendWatchingList(description, channel) {
+  let embed = {
+    title: "Current announcements ",
+    author: {
+      name: "AniList",
+      url: "https://anilist.co",
+      icon_url: "https://anilist.co/img/logo_al.png"
+    },
+    description
+  };
+  channel.send({embed});
+}
 
 function checkModifyPermission(message) {
   switch (process.env.PERMISSION_TYPE) {
