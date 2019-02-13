@@ -131,10 +131,10 @@ function makeAnnouncement(entry, date) {
       if (!channelData.shows || channelData.shows.length === 0)
         return;
 
-      if (channelData.shows.includes(e.media.id)) {
+      if (channelData.shows.includes(entry.media.id)) {
         const channel = client.channels.find(v => v.id === channelId);
         if (channel) {
-          console.log(`Announcing episode ${e.media.title.romaji} to ${channel.guild.name}@${channel.id}`);
+          console.log(`Announcing episode ${entry.media.title.romaji} to ${channel.guild.name}@${channel.id}`);
           channel.send({embed});
         }
       }
