@@ -101,7 +101,7 @@ function getAllWatched() {
 
 function makeAnnouncement(entry, date) {
   let description = `Episode ${entry.episode} of [${entry.media.title.romaji}](${entry.media.siteUrl}) has just aired.`;
-  if (entry.media.externalLinks) {
+  if (entry.media.externalLinks && entry.media.externalLinks.length > 0) {
     description += "\n\nWatch: ";
     let multipleSites = false;
     entry.media.externalLinks.forEach(site => {
