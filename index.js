@@ -202,7 +202,6 @@ const commands = {
       function handleWatchingPage(page) {
         query(requireText("./query/Watching.graphql", require), { watched: channelData.shows, page }, res => {
           let description = "";
-          console.log(res.data);
           res.data.Page.media.forEach(m => {
             if (m.status !== "RELEASING")
               return;
