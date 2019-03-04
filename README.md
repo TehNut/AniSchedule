@@ -53,16 +53,17 @@ eg: If your prefix is `?as`, the command would be `?aswatch`.
   
 * `watch`
 
-  This command adds a new anime to watch for new episodes of. It takes the AniList media ID of the anime which can be obtained
-  from the series URL. Whatever channel this is used in is the channel the announcements will be made in. This follows the 
-  permission level set in the `.env` file.
+  This command adds a new anime to watch for new episodes of. You can either provide the AniList entry link or the media 
+  ID of the anime which can be obtained from the series URL. Whatever channel this is used in is the channel the announcements 
+  will be made in. This follows the permission level set in the `.env` file.
   
   eg: In the URL `https://anilist.co/anime/99263/Tate-no-Yuusha-no-Nariagari/`, the ID is `99263`.
 
 * `unwatch`
 
-  This command removes an anime from the list. Just as with the `watch` command, it takes the AniList media ID. Must be 
-  used in the channel that the watch was added to. This follows the permission level set in the `.env` file.
+  This command removes an anime from the list. Just as with the `watch` command, it takes the AniList media entry link or
+  the media ID. Must be used in the channel that the watch was added to. This follows the permission level set in the `.env` 
+  file.
 
 * `watching`
   

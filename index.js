@@ -6,6 +6,7 @@ const fetch = require("node-fetch");
 const flatten = require("array-flatten");
 const fs = require("fs");
 
+const idRegex = /anilist\.co\/anime\/(.\d*)/;
 const streamingSites = [
   "Amazon",
   "Animelab",
@@ -152,7 +153,7 @@ const commands = {
 
       const channelData = data[message.channel.id] || { shows: [] };
       const watched = channelData.shows || [];
-      const watchId = parseInt(args[0]);
+      const watchId = getMediaId(args[0]);
       if (!watchId || watched.includes(watchId)) {
         message.react("👎");
         return;
@@ -177,7 +178,7 @@ const commands = {
         return;
       }
 
-      const watchId = parseInt(args[0]);
+      const watchId = getMediaId(args[0]);
       if (!watchId || !channelData.shows.includes(watchId)) {
         message.react("👎");
         return;
@@ -201,6 +202,7 @@ const commands = {
       function handleWatchingPage(page) {
         query(requireText("./query/Watching.graphql", require), { watched: channelData.shows, page }, res => {
           let description = "";
+          console.log(res.data);
           res.data.Page.media.forEach(m => {
             if (m.status !== "RELEASING")
               return;
@@ -253,4 +255,16 @@ function checkModifyPermission(message) {
     default:
       return true;
   }
+}
+
+function getMediaId(input) {
+  // First we try directly parsing the input in case it's the standalone ID
+  let output = parseInt(input);
+  if (output)
+    return output;
+
+  // If that fails, we try parsing it with regex to pull the ID from an AniList link
+  let match = idRegex.exec(input);
+  // If there's no match, return null. Otherwise, parse the match and return that
+  return !match ? null : parseInt(match[1]);
 }
