@@ -103,14 +103,16 @@ function getAllWatched() {
 function makeAnnouncement(entry, date) {
   let description = `Episode ${entry.episode} of [${entry.media.title.romaji}](${entry.media.siteUrl}) has just aired.`;
   if (entry.media.externalLinks && entry.media.externalLinks.length > 0) {
-    description += "\n\nWatch: ";
+    let streamLinks = "";
     let multipleSites = false;
     entry.media.externalLinks.forEach(site => {
       if (streamingSites.includes(site.site)) {
-        description += `${multipleSites ? " | " : ""} [${site.site}](${site.url})`;
+        streamLinks += `${multipleSites ? " | " : ""} [${site.site}](${site.url})`;
         multipleSites = true;
       }
     });
+
+    description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks : "No licensed streaming links available");
   }
 
   let embed = {
