@@ -1,5 +1,5 @@
 const requireText = require("require-text");
-import {query,getFromNextDays,getAnnouncementEmbed} from "./util";
+import {getAnnouncementEmbed, getFromNextDays, query} from "./util";
 
 const alIdRegex = /anilist\.co\/anime\/(.\d*)/;
 const malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
@@ -13,10 +13,10 @@ export default {
       }
 
       message.channel.startTyping();
-      const channelData = data[message.channel.id] || { shows: [] };
+      const channelData = data[message.channel.id] || {shows: []};
       const watched = channelData.shows || [];
-      const watchId = await getMediaId(args[0]);
 
+      const watchId = await getMediaId(args[0]);
       if (!watchId || watched.includes(watchId)) {
         message.react("👎");
         message.channel.stopTyping();
@@ -45,7 +45,7 @@ export default {
         return;
       }
 
-      let watchId = await getMediaId(args[0]);
+      const watchId = await getMediaId(args[0]);
       if (!watchId || !channelData.shows.includes(watchId)) {
         message.react("👎");
         message.channel.stopTyping();
@@ -99,13 +99,13 @@ export default {
       handleWatchingPage(0);
 
       function handleWatchingPage(page) {
-        query(requireText("./query/Watching.graphql", require), { watched: channelData.shows, page }, res => {
+        query(requireText("./query/Watching.graphql", require), {watched: channelData.shows, page}, res => {
           let description = "";
           res.data.Page.media.forEach(m => {
             if (m.status !== "RELEASING")
               return;
 
-            let nextLine = `\n- [${m.title.romaji}](${m.siteUrl}) (\`${m.id}\`)`;
+            const nextLine = `\n- [${m.title.romaji}](${m.siteUrl}) (\`${m.id}\`)`;
             if (1000 - description.length < nextLine.length) {
               sendWatchingList(description, message.channel);
               console.log(description.length);
@@ -131,7 +131,7 @@ export default {
 };
 
 function sendWatchingList(description, channel) {
-  let embed = {
+  const embed = {
     title: "Current announcements ",
     author: {
       name: "AniList",
@@ -156,7 +156,7 @@ function checkModifyPermission(message) {
 
 async function getMediaId(input) {
   // First we try directly parsing the input in case it's the standalone ID
-  let output = parseInt(input);
+  const output = parseInt(input);
   if (output)
     return output;
 

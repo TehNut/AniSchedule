@@ -5,7 +5,7 @@ const client = new discord.Client();
 const flatten = require("array-flatten");
 const fs = require("fs");
 import commands from "./commands";
-import {query,getAnnouncementEmbed,getFromNextDays} from "./util";
+import {getAnnouncementEmbed, getFromNextDays, query} from "./util";
 
 const commandPrefix = process.env.COMMAND_PREFIX || "!";
 const dataFile = "./data.json";
@@ -20,11 +20,11 @@ client.on("ready", () => {
     fs.writeFileSync(dataFile, JSON.stringify({}));
   }
 
-  handleSchedules(Math.round(getFromNextDays(1).getTime() / 1000)); // Initial run
-  setInterval(() => handleSchedules(Math.round(getFromNextDays(1).getTime() / 1000)), 1000 * 60 * 60 * 24); // Schedule future runs every 24 hours
+  handleSchedules(Math.round(getFromNextDays().getTime() / 1000)); // Initial run
+  setInterval(() => handleSchedules(Math.round(getFromNextDays().getTime() / 1000)), 1000 * 60 * 60 * 24); // Schedule future runs every 24 hours
 });
 
-client.on("error", e => console.log(e.error));
+client.on('error', console.error);
 
 client.on("message", msg => {
   if (msg.author.bot)
@@ -33,11 +33,10 @@ client.on("message", msg => {
   const msgContent = msg.content.split(" ");
 
   if (msgContent[0].startsWith(commandPrefix)) {
-    let command = msgContent[0].substr(commandPrefix.length);
-    command = commands[command];
+    const command = commands[msgContent[0].substr(commandPrefix.length)];
     if (command) {
       const serverData = data[msg.guild.id] || {};
-      let promise = command.handle(msg, msgContent.slice(1), serverData);
+      const promise = command.handle(msg, msgContent.slice(1), serverData);
       if (promise) {
         promise.then(ret => {
           if (ret) {
@@ -80,7 +79,7 @@ function getAllWatched() {
 }
 
 function makeAnnouncement(entry, date, upNext = false) {
-  let embed = getAnnouncementEmbed(entry, date, upNext);
+  const embed = getAnnouncementEmbed(entry, date, upNext);
 
   Object.values(data).forEach(serverData => {
     Object.entries(serverData).forEach(([channelId, channelData]) => {

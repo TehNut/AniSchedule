@@ -24,7 +24,7 @@ export async function query(query, variables, callback) {
   }).then(res => res.json()).then(res => callback(res));
 }
 
-export function getFromNextDays(days) {
+export function getFromNextDays(days = 1) {
   return new Date(new Date().getTime() + (24 * 60 * 60 * 1000 * days));
 }
 
