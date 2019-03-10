@@ -15,19 +15,19 @@ export default {
       message.channel.startTyping();
       const channelData = data[message.channel.id] || { shows: [] };
       const watched = channelData.shows || [];
-      return await getMediaId(args[0]).then(watchId => {
-        if (!watchId || watched.includes(watchId)) {
-          message.react("👎");
-          message.channel.stopTyping();
-          return;
-        }
-        watched.push(watchId);
-        channelData.shows = watched;
-        data[message.channel.id] = channelData;
-        message.react("👍");
+      const watchId = await getMediaId(args[0]);
+
+      if (!watchId || watched.includes(watchId)) {
+        message.react("👎");
         message.channel.stopTyping();
-        return data;
-      });
+        return;
+      }
+      watched.push(watchId);
+      channelData.shows = watched;
+      data[message.channel.id] = channelData;
+      message.react("👍");
+      message.channel.stopTyping();
+      return data;
     }
   },
   unwatch: {
@@ -45,18 +45,17 @@ export default {
         return;
       }
 
-      return await getMediaId(args[0]).then(watchId => {
-        if (!watchId || !channelData.shows.includes(watchId)) {
-          message.react("👎");
-          message.channel.stopTyping();
-          return;
-        }
-        channelData.shows = channelData.shows.filter(id => id !== watchId);
-        data[message.channel.id] = channelData;
-        message.react("👍");
+      let watchId = await getMediaId(args[0]);
+      if (!watchId || !channelData.shows.includes(watchId)) {
+        message.react("👎");
         message.channel.stopTyping();
-        return data;
-      });
+        return;
+      }
+      channelData.shows = channelData.shows.filter(id => id !== watchId);
+      data[message.channel.id] = channelData;
+      message.react("👍");
+      message.channel.stopTyping();
+      return data;
     }
   },
   next: {

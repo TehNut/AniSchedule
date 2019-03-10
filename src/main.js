@@ -39,7 +39,7 @@ client.on("message", msg => {
       const serverData = data[msg.guild.id] || {};
       let promise = command.handle(msg, msgContent.slice(1), serverData);
       if (promise) {
-      promise.then(ret => {
+        promise.then(ret => {
           if (ret) {
             data[msg.guild.id] = ret;
             fs.writeFileSync(dataFile, JSON.stringify(data));
