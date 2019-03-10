@@ -3,7 +3,7 @@
 A Discord bot that uses the [AniList](https://anilist.co) API to retrieve the airing schedule for configured anime and 
 sends a message when a new episode has aired.
 
-![Example Announcement](./img/example.png)
+![Example Announcement](./img/example.png) ![Example Announcement](./img/example2.png)
 
 ## Running Locally
 
