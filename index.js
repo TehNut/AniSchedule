@@ -30,8 +30,8 @@ client.on("ready", () => {
     fs.writeFileSync(dataFile, JSON.stringify({}));
   }
 
-  handleSchedules(Math.round(getTomorrow().getTime() / 1000)); // Initial run
-  setInterval(() => handleSchedules(Math.round(getTomorrow().getTime() / 1000)), 1000 * 60 * 60 * 24); // Schedule future runs every 24 hours
+  handleSchedules(Math.round(getFromNextDays(1).getTime() / 1000)); // Initial run
+  setInterval(() => handleSchedules(Math.round(getFromNextDays(1).getTime() / 1000)), 1000 * 60 * 60 * 24); // Schedule future runs every 24 hours
 });
 client.on("error", e => console.log(e.error));
 client.on("message", msg => {
@@ -88,8 +88,8 @@ function query(query, variables, callback) {
   }).then(res => res.json()).then(res => callback(res));
 }
 
-function getTomorrow() {
-  return new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
+function getFromNextDays(days) {
+  return new Date(new Date().getTime() + (24 * 60 * 60 * 1000 * days));
 }
 
 function getAllWatched() {
@@ -100,34 +100,8 @@ function getAllWatched() {
   return [...flatten(watched)];
 }
 
-function makeAnnouncement(entry, date) {
-  let description = `Episode ${entry.episode} of [${entry.media.title.romaji}](${entry.media.siteUrl}) has just aired.`;
-  if (entry.media.externalLinks && entry.media.externalLinks.length > 0) {
-    let streamLinks = "";
-    let multipleSites = false;
-    entry.media.externalLinks.forEach(site => {
-      if (streamingSites.includes(site.site)) {
-        streamLinks += `${multipleSites ? " | " : ""} [${site.site}](${site.url})`;
-        multipleSites = true;
-      }
-    });
-
-    description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks : "No licensed streaming links available");
-  }
-
-  let embed = {
-    color: parseInt(entry.media.coverImage.color.substr(1), 16),
-    thumbnail: {
-      url: entry.media.coverImage.large
-    },
-    author: {
-      name: "AniList",
-      url: "https://anilist.co",
-      icon_url: "https://anilist.co/img/logo_al.png"
-    },
-    description,
-    timestamp: date
-  };
+function makeAnnouncement(entry, date, upNext = false) {
+  let embed = getAnnouncementEmbed(entry, date, upNext);
 
   Object.values(data).forEach(serverData => {
     Object.entries(serverData).forEach(([channelId, channelData]) => {
@@ -143,6 +117,36 @@ function makeAnnouncement(entry, date) {
       }
     });
   });
+}
+
+function getAnnouncementEmbed(entry, date, upNext = false) {
+  let description = `Episode ${entry.episode} of [${entry.media.title.romaji}](${entry.media.siteUrl})${upNext ? "" : " has just aired."}`;
+  if (entry.media.externalLinks && entry.media.externalLinks.length > 0) {
+    let streamLinks = "";
+    let multipleSites = false;
+    entry.media.externalLinks.forEach(site => {
+      if (streamingSites.includes(site.site)) {
+        streamLinks += `${multipleSites ? " | " : ""} [${site.site}](${site.url})`;
+        multipleSites = true;
+      }
+    });
+
+    description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks : "No licensed streaming links available");
+  }
+
+  return {
+    color: parseInt(entry.media.coverImage.color.substr(1), 16),
+    thumbnail: {
+      url: entry.media.coverImage.large
+    },
+    author: {
+      name: "AniList",
+      url: "https://anilist.co",
+      icon_url: "https://anilist.co/img/logo_al.png"
+    },
+    description,
+    timestamp: date
+  };
 }
 
 const commands = {
@@ -189,6 +193,31 @@ const commands = {
       data[message.channel.id] = channelData;
       message.react("👍");
       return data;
+    }
+  },
+  next: {
+    handle(message, args, data) {
+      const channelData = data[message.channel.id];
+      if (!channelData || !channelData.shows || channelData.shows.length === 0) {
+        message.react("👎");
+        return;
+      }
+
+      query(requireText("./query/Schedule.graphql", require), { page: 0, watched: channelData.shows, nextDay: Math.round(getFromNextDays(7).getTime() / 1000) }, res => {
+        if (res.errors) {
+          console.log(JSON.stringify(res.errors));
+          return;
+        }
+
+        if (res.data.Page.airingSchedules.length === 0) {
+          message.react("👎");
+          return;
+        }
+
+        const anime = res.data.Page.airingSchedules[0];
+        const embed = getAnnouncementEmbed(anime, new Date(anime.airingAt * 1000), true);
+        message.channel.send({embed})
+      });
     }
   },
   watching: {

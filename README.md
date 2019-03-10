@@ -57,6 +57,9 @@ eg: If your prefix is `?as`, the command would be `?aswatch`.
   ID of the anime which can be obtained from the series URL. Whatever channel this is used in is the channel the announcements 
   will be made in. This follows the permission level set in the `.env` file.
   
+  A 👍 reaction indicates that adding this anime was successful. A 👎 reaction indicates that it was unsuccessful. An unsuccessful
+  reaction could mean that the channel is already watching that anime or that the ID was invalid.
+  
   eg: In the URL `https://anilist.co/anime/99263/Tate-no-Yuusha-no-Nariagari/`, the ID is `99263`.
 
 * `unwatch`
@@ -64,7 +67,20 @@ eg: If your prefix is `?as`, the command would be `?aswatch`.
   This command removes an anime from the list. Just as with the `watch` command, it takes the AniList media entry link or
   the media ID. Must be used in the channel that the watch was added to. This follows the permission level set in the `.env` 
   file.
+  
+  A 👍 reaction indicates that removing this anime was successful. A 👎 reaction indicates that it was unsuccessful. An unsuccessful
+  reaction could mean that the channel was not watching that anime or that the ID was invalid.
+  
+* `next`
+
+  This command will display the next anime to air (in the next 7 days) that the current channel is watching.
+  
+  A 👎 reaction indicates that it was unsuccessful. An unsuccessful reaction could mean that the channel is not watching
+  any anime or that none of the watched anime have an episode airing in the next 7 days.
 
 * `watching`
   
   This command prints a list of all anime names being watched that are still currently airing. It can be used by anybody.
+
+  A 👎 reaction indicates that it was unsuccessful. An unsuccessful reaction means that this channel is not watching any
+  anime.

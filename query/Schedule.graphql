@@ -1,5 +1,5 @@
-query($page: Int = 0, $watched: [Int!]!, $nextDay: Int!) {
-  Page(page: $page) {
+query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $nextDay: Int!) {
+  Page(page: $page, perPage: $amount) {
     pageInfo {
       currentPage
       hasNextPage
