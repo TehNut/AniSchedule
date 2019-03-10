@@ -17,7 +17,7 @@ cd AniSchedule
 npm install
 ```
 
-Create a new `.env` file in the root directory of the project (the same directory `index.js` is in) with the following properties:
+Create a new `.env` file in the root directory of the project (the same directory as this README) with the following properties:
 
 ```
 BOT_TOKEN=$TOKEN

@@ -2,14 +2,15 @@
   "name": "anischedule",
   "version": "1.0.0",
   "description": "Discord bot that informs channels of newly aired episodes based on the AniList API",
-  "main": "index.js",
+  "main": "src/main.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node -r esm src/main.js"
   },
   "dependencies": {
     "array-flatten": "^2.1.2",
     "discord.js": "^11.4.2",
     "dotenv": "^6.2.0",
+    "esm": "^3.2.14",
     "node-fetch": "^2.3.0",
     "require-text": "^0.0.1"
   },
