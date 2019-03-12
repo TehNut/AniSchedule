@@ -96,3 +96,9 @@ function makeAnnouncement(entry, date, upNext = false) {
     });
   });
 }
+
+export default {
+  commandPrefix,
+  commands,
+  client
+}

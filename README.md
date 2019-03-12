@@ -84,3 +84,7 @@ eg: If your prefix is `?as`, the command would be `?aswatch`.
 
   A 👎 reaction indicates that it was unsuccessful. An unsuccessful reaction means that this channel is not watching any
   anime.
+  
+* `help`
+
+  This command lists all available commands along with a short description.

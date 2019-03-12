@@ -1,11 +1,16 @@
+require("dotenv").config();
 const requireText = require("require-text");
 import {getAnnouncementEmbed, getFromNextDays, query} from "./util";
+import main from "./main";
 
 const alIdRegex = /anilist\.co\/anime\/(.\d*)/;
 const malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
 
 export default {
   watch: {
+    description: "Adds a new anime to watch for new episodes of. Whatever channel this is used in is the channel the announcements will be made in."
+      + (getPermissionString() ? " " + getPermissionString() : "")
+      + "\nYou may provide an AniList entry link, a direct AniList media ID, or a MyAnimeList link.",
     async handle(message, args, data) {
       if (!checkModifyPermission(message)) {
         message.react("👎");
@@ -31,6 +36,9 @@ export default {
     }
   },
   unwatch: {
+    description: "Removes an anime from the list. Whatever channel this is used in is the channel the announcements will be made in."
+      + (getPermissionString() ? " " + getPermissionString() : "")
+      + "\nYou may provide an AniList entry link, a direct AniList media ID, or a MyAnimeList link.",
     async handle(message, args, data) {
       if (!checkModifyPermission(message)) {
         message.react("👎");
@@ -59,6 +67,7 @@ export default {
     }
   },
   next: {
+    description: "Displays the next anime to air (in the next 7 days) that the current channel is watching.",
     handle(message, args, data) {
       const channelData = data[message.channel.id];
       if (!channelData || !channelData.shows || channelData.shows.length === 0) {
@@ -88,6 +97,7 @@ export default {
     }
   },
   watching: {
+    description: "Prints a list of all anime names being watched that are still currently airing.",
     handle(message, args, data) {
       const channelData = data[message.channel.id];
       if (!channelData || !channelData.shows || channelData.shows.length === 0) {
@@ -128,11 +138,35 @@ export default {
       }
     }
   },
+  help: {
+    description: "Prints out all available commands with a short description.",
+    handle(message, args, data) {
+      const embed = {
+        title: "AniSchedule Commands",
+        author: {
+          name: "AniSchedule",
+          url: "https://anilist.co",
+          icon_url: main.client.user.avatarURL
+        },
+        color: 4044018,
+        description: "[GitHub](https://github.com/TehNut/AniSchedule) | [Author](https://anilist.co/user/TehNut/)\nCommands must be prefixed by `" + main.commandPrefix + "`",
+        footer: {
+          text: "For more information, see the README on the GitHub page"
+        },
+        fields: []
+      };
+
+      Object.entries(main.commands).forEach((k, v) => embed.fields.push({name: k[0], value: k[1].description, inline: true}));
+
+      message.channel.send({embed});
+    }
+  }
 };
 
 function sendWatchingList(description, channel) {
   const embed = {
     title: "Current announcements ",
+    color: 4044018,
     author: {
       name: "AniList",
       url: "https://anilist.co",
@@ -151,6 +185,17 @@ function checkModifyPermission(message) {
       return message.author.id === message.guild.ownerID;
     default:
       return true;
+  }
+}
+
+function getPermissionString() {
+  switch (process.env.PERMISSION_TYPE) {
+    case "CHANNEL_MANAGER":
+      return "Requires the Channel Manager permission.";
+    case "SERVER_OWNER":
+      return "May only be used by the server owner.";
+    default:
+      return null;
   }
 }
 
