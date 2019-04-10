@@ -44,7 +44,7 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
   }
 
   return {
-    color: parseInt(entry.media.coverImage.color.substr(1), 16),
+    color: entry.media.coverImage.color ? parseInt(entry.media.coverImage.color.substr(1), 16) : 15732041,
     thumbnail: {
       url: entry.media.coverImage.large
     },
