@@ -27,6 +27,9 @@ client.on("ready", () => {
 client.on('error', console.error);
 
 client.on("message", msg => {
+  if (!msg.guild)
+    return;
+
   if (msg.author.bot)
     return;
 
