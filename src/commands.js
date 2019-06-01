@@ -138,6 +138,39 @@ export default {
       }
     }
   },
+  cleanup: {
+    description: "Purges any completed shows from this channel's watch list.",
+    async handle(message, args, data) {
+      const channelData = data[message.channel.id];
+      if (!channelData || !channelData.shows || channelData.shows.length === 0) {
+        message.react("👎");
+        return;
+      }
+
+      await handlePage();
+
+      const finished = [];
+      async function handlePage(page = 0) {
+        query(requireText("./query/Watching.graphql", require), {watched: channelData.shows, page}, async res => {
+          res.data.Page.media.filter(e => e.status === "FINISHED").forEach(e => finished.push(e));
+          if (res.data.Page.pageInfo.hasNextPage)
+            await handlePage(res.data.Page.pageInfo.currentPage + 1);
+        });
+      }
+
+      finished.forEach(e => {
+        while (channelData.shows[channelData.shows.indexOf(e.id)])
+          delete channelData.shows[channelData.shows.indexOf(e.id)];
+      });
+
+      message.channel.send(`Removed ${finished.length} shows from the list.`);
+
+      data[message.channel.id] = channelData;
+      message.react("👍");
+      message.channel.stopTyping();
+      return data;
+    }
+  },
   help: {
     description: "Prints out all available commands with a short description.",
     handle(message, args, data) {
