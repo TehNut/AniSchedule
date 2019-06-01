@@ -40,7 +40,7 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
       }
     });
 
-    description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks : "No licensed streaming links available");
+    description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks + "\n\nIt may take some time to appear on the above service(s)" : "No licensed streaming links available");
   }
 
   return {
