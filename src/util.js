@@ -43,17 +43,24 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
     description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks + "\n\nIt may take some time to appear on the above service(s)" : "No licensed streaming links available");
   }
 
+let Source = (entry.media.source.length > 0 ) ? `Source: ${entry.media.source}` : "N/A"
+let Studio = (entry.media.studios.edges.length > 0 && entry.media.studios.edges[0].node.name) ? `Studio: ${entry.media.studios.edges[0].node.name}` : "No studio found"
+
   return {
-    color: entry.media.coverImage.color ? parseInt(entry.media.coverImage.color.substr(1), 16) : 43775,
+    color:  entry.media.coverImage.color ? parseInt(entry.media.coverImage.color.substr(1), 16) : 43775,
     thumbnail: {
       url: entry.media.coverImage.large
     },
     author: {
-      name: "AniList",
-      url: "https://anilist.co",
-      icon_url: "https://anilist.co/img/logo_al.png"
+      name: "Anilist",
+      //url: "https://anilist.co",
+      icon_url: "https://i.imgur.com/mYFVGLM.png"
     },
     description,
-    timestamp: date
+    timestamp: date,
+    footer: {
+      text: `${Source} | ${Studio} `
+    }
   };
 }
+
