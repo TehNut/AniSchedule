@@ -47,12 +47,12 @@ let Source = (entry.media.source.length > 0 ) ? `Source: ${entry.media.source}` 
 let Studio = (entry.media.studios.edges.length > 0 && entry.media.studios.edges[0].node.name) ? `Studio: ${entry.media.studios.edges[0].node.name}` : "No studio found"
 
   return {
-    color:  entry.media.coverImage.color ? parseInt(entry.media.coverImage.color.substr(1), 16) : 43775,
+    color: entry.media.coverImage.color ? parseInt(entry.media.coverImage.color.substr(1), 16) : 43775,
     thumbnail: {
       url: entry.media.coverImage.large
     },
     author: {
-      name: "Anilist",
+      name: "AniList",
       url: "https://anilist.co",
       icon_url: "https://anilist.co/img/logo_al.png"
     },
