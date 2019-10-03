@@ -54,7 +54,7 @@ let Studio = (entry.media.studios.edges.length > 0 && entry.media.studios.edges[
     author: {
       name: "Anilist",
       url: "https://anilist.co",
-      icon_url: "https://i.imgur.com/mYFVGLM.png"
+      icon_url: "https://anilist.co/img/logo_al.png"
     },
     description,
     timestamp: date,
