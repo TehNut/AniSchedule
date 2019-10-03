@@ -8,6 +8,7 @@ query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $nextDay: Int!) {
       media {
         id
         siteUrl
+        source
         title {
           romaji
         }
@@ -19,6 +20,19 @@ query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $nextDay: Int!) {
           site
           url
         }
+        
+        trailer {
+          id
+          site
+        }
+        studios(isMain: true) {
+          edges {
+            isMain
+            node {
+              name
+          }
+        }
+      }
       }
       episode
       airingAt
