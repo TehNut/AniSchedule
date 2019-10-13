@@ -1,6 +1,6 @@
 {
   "name": "anischedule",
-  "version": "1.0.0",
+  "version": "1.1.4",
   "description": "Discord bot that informs channels of newly aired episodes based on the AniList API",
   "main": "src/main.js",
   "scripts": {
