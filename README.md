@@ -1,4 +1,4 @@
-# AniSchedule
+# AniSchedule [![Latest Release](https://img.shields.io/github/v/release/TehNut/AniSchedule?color=%233DB4F2&label=release&style=flat-square)](https://github.com/TehNut/AniSchedule/releases/latest)
 
 A Discord bot that uses the [AniList](https://anilist.co) API to retrieve the airing schedule for configured anime and 
 sends a message when a new episode has aired.
