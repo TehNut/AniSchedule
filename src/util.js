@@ -43,6 +43,9 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
     description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks + "\n\nIt may take some time to appear on the above service(s)" : "No licensed streaming links available");
   }
 
+  const source = (entry.media.source.length > 0) ? `Source: ${entry.media.source}` : "N/A"
+  const studio = (entry.media.studios.edges.length > 0 && entry.media.studios.edges[0].node.name) ? `Studio: ${entry.media.studios.edges[0].node.name}` : "No Studio found"
+
   return {
     color: entry.media.coverImage.color ? parseInt(entry.media.coverImage.color.substr(1), 16) : 43775,
     thumbnail: {
@@ -54,6 +57,10 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
       icon_url: "https://anilist.co/img/logo_al.png"
     },
     description,
-    timestamp: date
+    timestamp: date,
+    footer: {
+      text: `${source} | ${studio} `
+    }
   };
 }
+
