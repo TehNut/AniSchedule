@@ -43,8 +43,17 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
     description += "\n\n" + (streamLinks.length > 0 ? "Watch: " + streamLinks + "\n\nIt may take some time to appear on the above service(s)" : "No licensed streaming links available");
   }
 
-  const source = (entry.media.source.length > 0) ? `Source: ${entry.media.source}` : "N/A"
-  const studio = (entry.media.studios.edges.length > 0 && entry.media.studios.edges[0].node.name) ? `Studio: ${entry.media.studios.edges[0].node.name}` : "No Studio found"
+  let format = "";
+  if (entry.media.format)
+    format = `Format: ${entry.media.format.includes("_") ? displayify(entry.media.format) : entry.media.format}`;
+
+  let duration = "";
+  if (entry.media.duration)
+    duration = `Duration: ${parseTime(entry.media.duration * 60)}`;
+
+  let studio = "";
+  if (entry.media.studios && entry.media.studios.edges.length > 0)
+    studio = `Studio: ${entry.media.studios.edges[0].node.name}`;
 
   return {
     color: entry.media.coverImage.color ? parseInt(entry.media.coverImage.color.substr(1), 16) : 43775,
@@ -59,8 +68,32 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
     description,
     timestamp: date,
     footer: {
-      text: `${source} | ${studio} `
+      text: `${format} • ${duration} • ${studio} `
     }
   };
+}
+
+export function displayify(enumVal) {
+  const words = enumVal.split("_");
+  for (let i = 0; i < words.length; i++)
+    words[i] = words[i].substr(0, 1) + words[i].toLowerCase().substr(1);
+
+  return words.join(" ");
+}
+
+export function parseTime(secs) {
+  let seconds = parseInt(secs, 10);
+
+  let hours = Math.floor(seconds / 3600);
+  seconds -= hours * 3600;
+  let minutes = Math.floor(seconds / 60);
+
+  let ret = "";
+  if (hours > 0)
+    ret += hours + "h";
+  if (minutes > 0)
+    ret += (ret.length === 0 ? "" : " ") + minutes + "m";
+
+  return ret;
 }
 

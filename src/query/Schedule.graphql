@@ -8,7 +8,8 @@ query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $nextDay: Int!) {
       media {
         id
         siteUrl
-        source
+        format
+        duration
         title {
           romaji
         }
@@ -20,7 +21,6 @@ query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $nextDay: Int!) {
           site
           url
         }
-        
         studios(isMain: true) {
           edges {
             isMain
