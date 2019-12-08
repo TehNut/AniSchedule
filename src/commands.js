@@ -1,12 +1,13 @@
 require("dotenv").config();
+
 const requireText = require("require-text");
 import {getAnnouncementEmbed, getFromNextDays, query} from "./util";
-import main from "./main";
+import flatten from "array-flatten";
 
 const alIdRegex = /anilist\.co\/anime\/(.\d*)/;
 const malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
 
-export default {
+const commands = {
   watch: {
     description: "Adds a new anime to watch for new episodes of. Whatever channel this is used in is the channel the announcements will be made in."
       + (getPermissionString() ? " " + getPermissionString() : "")
@@ -76,7 +77,7 @@ export default {
       }
 
       message.channel.startTyping();
-      query(requireText("./query/Schedule.graphql", require), { page: 0, watched: channelData.shows, nextDay: Math.round(getFromNextDays(7).getTime() / 1000) }, res => {
+      query(requireText("./query/Schedule.graphql", require), { page: 0, watched: channelData.shows, nextDay: Math.round(getFromNextDays(7).getTime() / 1000) }).then(res => {
         if (res.errors) {
           console.log(JSON.stringify(res.errors));
           message.channel.stopTyping();
@@ -109,7 +110,7 @@ export default {
       handleWatchingPage(0);
 
       function handleWatchingPage(page) {
-        query(requireText("./query/Watching.graphql", require), {watched: channelData.shows, page}, res => {
+        query(requireText("./query/Watching.graphql", require), {watched: channelData.shows, page}).then(res => {
           let description = "";
           res.data.Page.media.forEach(m => {
             if (m.status !== "RELEASING")
@@ -141,34 +142,34 @@ export default {
   cleanup: {
     description: "Purges any completed shows from this channel's watch list.",
     async handle(message, args, data) {
-      const channelData = data[message.channel.id];
+      let channelData = data[message.channel.id];
       if (!channelData || !channelData.shows || channelData.shows.length === 0) {
         message.react("👎");
         return;
       }
 
-      await handlePage();
 
-      const finished = [];
-      async function handlePage(page = 0) {
-        query(requireText("./query/Watching.graphql", require), {watched: channelData.shows, page}, async res => {
-          res.data.Page.media.filter(e => e.status === "FINISHED").forEach(e => finished.push(e));
-          if (res.data.Page.pageInfo.hasNextPage)
-            await handlePage(res.data.Page.pageInfo.currentPage + 1);
+      function handlePage(page = 0) {
+        return query(requireText("./query/Watching.graphql", require), {watched: channelData.shows, page}).then(res => {
+          return res;
         });
       }
 
-      finished.forEach(e => {
-        while (channelData.shows[channelData.shows.indexOf(e.id)])
-          delete channelData.shows[channelData.shows.indexOf(e.id)];
+      let finished = [];
+      return handlePage().then(res => res.data.Page).then(res => promiseWhile(res, val => {
+        finished.push(val.media.filter(e => e.status === "FINISHED").map(e => e.id));
+        return val.pageInfo.hasNextPage
+      }, val => handlePage(val.pageInfo.currentPage + 1).then(res => res.data.Page))).then(() => {
+        finished = flatten(finished);
+        channelData.shows = channelData.shows.filter(e => !finished.includes(e));
+
+        message.channel.send(`Removed ${finished.length} shows from the list.`);
+
+        data[message.channel.id] = channelData;
+        message.react("👍");
+        message.channel.stopTyping();
+        return data;
       });
-
-      message.channel.send(`Removed ${finished.length} shows from the list.`);
-
-      data[message.channel.id] = channelData;
-      message.react("👍");
-      message.channel.stopTyping();
-      return data;
     }
   },
   help: {
@@ -179,22 +180,24 @@ export default {
         author: {
           name: "AniSchedule",
           url: "https://anilist.co",
-          icon_url: main.client.user.avatarURL
+          icon_url: message.client.user.avatarURL
         },
         color: 4044018,
-        description: "[GitHub](https://github.com/TehNut/AniSchedule) | [Author](https://anilist.co/user/TehNut/)\nCommands must be prefixed by `" + main.commandPrefix + "`",
+        description: "[GitHub](https://github.com/TehNut/AniSchedule) | [Author](https://anilist.co/user/TehNut/)\nCommands must be prefixed by `" + (process.env.COMMAND_PREFIX || "!") + "`",
         footer: {
           text: "For more information, see the README on the GitHub page"
         },
         fields: []
       };
 
-      Object.entries(main.commands).forEach((k, v) => embed.fields.push({name: k[0], value: k[1].description, inline: true}));
+      Object.entries(commands).forEach((k, v) => embed.fields.push({name: k[0], value: k[1].description, inline: true}));
 
       message.channel.send({embed});
     }
   }
 };
+
+export default commands;
 
 function sendWatchingList(description, channel) {
   const embed = {
@@ -250,7 +253,7 @@ async function getMediaId(input) {
   if (!match)
     return null;
 
-  return await query("query($malId: Int){Media(idMal:$malId){id}}", {malId: match[1]}, res => {
+  return await query("query($malId: Int){Media(idMal:$malId){id}}", {malId: match[1]}).then(res => {
     if (res.errors) {
       console.log(JSON.stringify(res.errors));
       return;
@@ -258,4 +261,12 @@ async function getMediaId(input) {
 
     return res.data.Media.id;
   });
+}
+
+function promiseWhile(data, condition, action) {
+  function whilst(data) {
+    return condition(data) ? action(data).then(whilst) : Promise.resolve(data);
+  }
+
+  return whilst(data);
 }

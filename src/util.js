@@ -10,7 +10,7 @@ const streamingSites = [
   "Viz"
 ];
 
-export async function query(query, variables, callback) {
+export async function query(query, variables) {
   return fetch("https://graphql.anilist.co", {
     method: "POST",
     headers: {
@@ -21,7 +21,7 @@ export async function query(query, variables, callback) {
       query,
       variables
     })
-  }).then(res => res.json()).then(res => callback(res));
+  }).then(res => res.json());
 }
 
 export function getFromNextDays(days = 1) {

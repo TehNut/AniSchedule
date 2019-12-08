@@ -16,6 +16,7 @@ client.on("ready", () => {
 
   if (fs.existsSync(dataFile)) {
     data = JSON.parse(fs.readFileSync(dataFile));
+    cleanupLists();
   } else {
     fs.writeFileSync(dataFile, JSON.stringify({}));
   }
@@ -55,7 +56,7 @@ client.on("message", msg => {
 client.login(process.env.BOT_TOKEN);
 
 function handleSchedules(time, page) {
-  query(requireText("./query/Schedule.graphql", require), { page: page, watched: getAllWatched(), nextDay: time }, res => {
+  query(requireText("./query/Schedule.graphql", require), { page: page, watched: getAllWatched(), nextDay: time }).then(res => {
     if (res.errors) {
       console.log(JSON.stringify(res.errors));
       return;
@@ -100,8 +101,20 @@ function makeAnnouncement(entry, date, upNext = false) {
   });
 }
 
+function cleanupLists() {
+  Object.values(data).forEach(serverData => {
+    Object.entries(serverData).forEach(([channelId, channelData]) => {
+      if (!channelData.shows || channelData.shows.length === 0)
+        return;
+
+      channelData.shows = channelData.shows.filter(e => e !== null);
+    });
+  });
+
+  fs.writeFileSync(dataFile, JSON.stringify(data));
+}
+
 export default {
   commandPrefix,
-  commands,
   client
 }
