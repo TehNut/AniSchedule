@@ -35,7 +35,7 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
     let multipleSites = false;
     entry.media.externalLinks.forEach(site => {
       if (streamingSites.includes(site.site)) {
-        streamLinks += `${multipleSites ? " | " : ""} [${site.site}](${site.url})`;
+        streamLinks += `${multipleSites ? " • " : ""} [${site.site}](${site.url})`;
         multipleSites = true;
       }
     });
@@ -68,7 +68,7 @@ export function getAnnouncementEmbed(entry, date, upNext = false) {
     description,
     timestamp: date,
     footer: {
-      text: `${format} • ${duration} • ${studio} `
+      text: `${format} • ${duration} • ${studio}`
     }
   };
 }
