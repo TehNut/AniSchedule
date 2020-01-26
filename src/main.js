@@ -10,6 +10,7 @@ import {getAnnouncementEmbed, getFromNextDays, query} from "./util";
 const commandPrefix = process.env.COMMAND_PREFIX || "!";
 const dataFile = "./data.json";
 let data = {};
+let queuedNotifications = [];
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -64,7 +65,11 @@ function handleSchedules(time, page) {
 
     res.data.Page.airingSchedules.forEach(e => {
       const date = new Date(e.airingAt * 1000);
+      if (queuedNotifications.includes(e.id))
+        return;
+
       console.log(`Scheduling announcement for ${e.media.title.romaji} on ${date}`);
+      queuedNotifications.push(e.id);
       setTimeout(() => makeAnnouncement(e, date), e.timeUntilAiring * 1000);
     });
 
@@ -83,6 +88,7 @@ function getAllWatched() {
 }
 
 function makeAnnouncement(entry, date, upNext = false) {
+  queuedNotifications = queuedNotifications.filter(q => q !== entry.id);
   const embed = getAnnouncementEmbed(entry, date, upNext);
 
   Object.values(data).forEach(serverData => {

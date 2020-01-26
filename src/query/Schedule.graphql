@@ -26,13 +26,14 @@ query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $nextDay: Int!) {
             isMain
             node {
               name
+            }
           }
         }
-      }
       }
       episode
       airingAt
       timeUntilAiring
+      id
     }
   }
 }
