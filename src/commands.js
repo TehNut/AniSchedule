@@ -22,16 +22,23 @@ const commands = {
       const channelData = data[message.channel.id] || {shows: []};
       const watched = channelData.shows || [];
 
-      const watchId = await getMediaId(args[0]);
-      if (!watchId || watched.includes(watchId)) {
-        message.react("👎");
-        message.channel.stopTyping();
-        return;
+      const failures = [];
+      for (let i = 0; i < args.length; i++) {
+        const watchId = await getMediaId(args[i]);
+        if (!watchId || watched.includes(watchId))
+          failures.push(args[i]);
+
+        watched.push(watchId);
+        channelData.shows = watched;
+        data[message.channel.id] = channelData;
       }
-      watched.push(watchId);
-      channelData.shows = watched;
-      data[message.channel.id] = channelData;
-      message.react("👍");
+
+      if (failures.length > 0)
+        await message.channel.sendMessage(`There were issues adding ${failures
+          .map(f => f.startsWith("https://") ? `<${f}>` : f)
+          .reduce((prev, curr, idx) => idx === 0 ? curr : prev + ", " + curr)}`);
+
+      message.react(failures.length === args.length ? "👎" : "👍");
       message.channel.stopTyping();
       return data;
     }
