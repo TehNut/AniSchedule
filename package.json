@@ -3,21 +3,28 @@
   "version": "1.1.4",
   "description": "Discord bot that informs channels of newly aired episodes based on the AniList API",
   "main": "src/main.js",
-  "scripts": {
-    "start": "node -r esm src/main.js"
-  },
-  "dependencies": {
-    "array-flatten": "^2.1.2",
-    "discord.js": "^11.4.2",
-    "dotenv": "^6.2.0",
-    "esm": "^3.2.14",
-    "node-fetch": "^2.3.0",
-    "require-text": "^0.0.1"
-  },
   "author": "TehNut",
+  "license": "MIT",
   "repository": {
     "url": "https://github.com/TehNut/AniSchedule",
     "type": "git"
   },
-  "license": "MIT"
+  "scripts": {
+    "start": "tsc && node dist/AniSchedule.js",
+    "dev": "ts-node-dev --respawn --no-notify --transpileOnly src/AniSchedule.ts"
+  },
+  "dependencies": {
+    "class-transformer": "^0.2.3",
+    "dotenv": "^8.2.0",
+    "eris": "^0.13.1",
+    "node-fetch": "^2.6.0",
+    "reflect-metadata": "0.1.13",
+    "typescript": "^3.9.3"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^12.12.2",
+    "@types/node-fetch": "^1.6.9",
+    "ts-node-dev": "^1.0.0-pre.44"
+  }
 }
