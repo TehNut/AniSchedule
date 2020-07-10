@@ -14,7 +14,7 @@ export default new Command({
       return resolve();
     }
 
-    const response = await query(scheduleQuery, { watched: channelStore.shows, nextDay:  Math.round(getFromNextDays(7).getTime() / 1000)});
+    const response = await query(scheduleQuery, { watched: channelStore.shows, amount: 1, nextDay:  Math.round(getFromNextDays(7).getTime() / 1000)});
     if (response.errors) {
       console.log(response.errors);
       message.addReaction("👎");
