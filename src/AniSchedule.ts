@@ -73,6 +73,8 @@ function makeAnnouncement(entry: any, date: Date, upNext = false) {
       if (channel) {
         console.log(`Announcing episode ${entry.media.title.romaji} to ${channel.guild.name}@${channel.id}`);
         channel.createMessage({ embed });
+        if (entry.media.episodes === entry.episode)
+          c.shows = c.shows.filter(id => id !== entry.media.id);
       }
     });
   });

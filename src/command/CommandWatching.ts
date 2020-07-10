@@ -8,7 +8,7 @@ const watchingQuery = readFileSync(join(__dirname, "../query/Watching.graphql"),
 
 export default new Command({
   name: "watching",
-  description: "Lists all the currently airing anime that are being watched by this channel.",
+  description: "Lists all the anime that are being watched by this channel.",
   handler: async (resolve, message, args, serverStore, channelStore, client) => {
     if (channelStore.shows.length === 0) {
       message.addReaction("👎");
@@ -19,16 +19,13 @@ export default new Command({
       const response = await query(watchingQuery, { watched: channelStore.shows, page });
       let description = "";
       response.data.Page.media.forEach((m: any) => {
-        if (m.status !== "RELEASING")
-          return;
-        
-          const nextLine = `\n• [${m.title.romaji}](${m.siteUrl}) (\`${m.id}\`)`;
-          if (1000 - description.length < nextLine.length) {
-            sendWatchingList(description, message.channel);
-            description = "";
-          }
-  
-          description += nextLine;
+        const nextLine = `\n• [${m.title.romaji}](${m.siteUrl}) (\`${m.id}\`)`;
+        if (1000 - description.length < nextLine.length) {
+          sendWatchingList(description, message.channel);
+          description = "";
+        }
+
+        description += nextLine;
       });
 
       if (description.length !== 0)

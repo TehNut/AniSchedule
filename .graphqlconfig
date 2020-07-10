@@ -1,0 +1,8 @@
+{
+  "schemaPath": "anilist_schema.graphql",
+  "extensions": {
+    "endpoints": {
+      "anilist": "https://graphql.anilist.co"
+    }
+  }
+}
