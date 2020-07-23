@@ -28,7 +28,7 @@ function getOrCreateStorage(): Storage {
     storage = plainToClass(Storage, JSON.parse(readFileSync("./data.json", "utf8")), {enableCircularCheck: true});
   } else {
     storage = new Storage();
-    writeFileSync("./data.json", classToPlain(storage));
+    writeFileSync("./data.json", JSON.stringify(classToPlain(storage)));
   }
 
   return storage;
