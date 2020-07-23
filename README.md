@@ -15,6 +15,7 @@ Run these commands to get the project locally:
 git clone https://github.com/TehNut/AniSchedule.git # or clone your own fork
 cd AniSchedule
 npm install
+npm build
 ```
 
 Create a new `.env` file in the root directory of the project (the same directory as this README) with the following properties:
