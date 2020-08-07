@@ -15,7 +15,7 @@
     "dev": "ts-node-dev --respawn --no-notify --transpile-only src/AniSchedule.ts"
   },
   "dependencies": {
-    "class-transformer": "0.2.3",
+    "class-transformer": "0.3.1",
     "dotenv": "8.2.0",
     "eris": "0.13.3",
     "node-fetch": "2.6.0",
