@@ -11,6 +11,9 @@ query($watched: [Int!] = [0], $page: Int!) {
       title {
         romaji
       }
+      nextAiringEpisode {
+        timeUntilAiring
+      }
     }
   }
 }

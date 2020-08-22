@@ -1,4 +1,4 @@
-import { query } from "../Util";
+import { query, formatTime } from "../Util";
 import Command from "./Command";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -19,7 +19,7 @@ export default new Command({
       const response = await query(watchingQuery, { watched: channelStore.shows, page });
       let description = "";
       response.data.Page.media.forEach((m: any) => {
-        const nextLine = `\n• [${m.title.romaji}](${m.siteUrl}) (\`${m.id}\`)`;
+        const nextLine = `\n• [${m.title.romaji}](${m.siteUrl}) (~${formatTime(m.nextAiringEpisode.timeUntilAiring)})`;
         if (1000 - description.length < nextLine.length) {
           sendWatchingList(description, message.channel);
           description = "";

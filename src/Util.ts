@@ -75,7 +75,7 @@ export function createAnnouncementEmbed(entry: any, date: Date, upNext?: boolean
   }
 
   const format = !entry.media.format ? "" : `Format: ${entry.media.format.includes("_") ? displayify(entry.media.format) : entry.media.format}`;
-  const duration = !entry.media.duration ? "" : `Duration: ${parseTime(entry.media.duration * 60)}`;
+  const duration = !entry.media.duration ? "" : `Duration: ${formatTime(entry.media.duration * 60)}`;
   const studio = !entry.media.studios || entry.media.studios.edges.length === 0 ? "" : `Studio: ${entry.media.studios.edges[0].node.name}`;
 
   return {
@@ -104,16 +104,34 @@ function displayify(enumVal: string): string {
   return words.join(" ");
 }
 
-function parseTime(seconds: number): string {
+export function parseTime(seconds: number) {
+  let weeks = Math.floor(seconds / (3600 * 24 * 7));
+  seconds -= weeks * 3600 * 24 * 7;
+  let days = Math.floor(seconds / (3600 * 24));
+  seconds -= days * 3600 * 24;
   let hours = Math.floor(seconds / 3600);
   seconds -= hours * 3600;
   let minutes = Math.floor(seconds / 60);
+  seconds -= minutes * 60;
+
+  return { weeks, days, hours, minutes, seconds };
+}
+
+export function formatTime(seconds: number, appendSeconds?: boolean) {
+  const time = parseTime(seconds);
 
   let ret = "";
-  if (hours > 0)
-    ret += hours + "h";
-  if (minutes > 0)
-    ret += (ret.length === 0 ? "" : " ") + minutes + "m";
+  if (time.weeks > 0)
+    ret += time.weeks + "w";
+  if (time.days > 0)
+    ret += (ret.length === 0 ? "" : " ") + time.days + "d";
+  if (time.hours > 0)
+    ret += (ret.length === 0 ? "" : " ") + time.hours + "h";
+  if (time.minutes > 0)
+    ret += (ret.length === 0 ? "" : " ") + time.minutes + "m";
+
+  if (appendSeconds && time.seconds > 0)
+    ret += (ret.length === 0 ? "" : " ") + time.seconds + "s";
 
   return ret;
 }
