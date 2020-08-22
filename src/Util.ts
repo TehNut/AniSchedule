@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import { Embed } from "eris";
+import { ServerStorage } from "./DataStore";
 
 export async function query(query: string, variables?: any) {
   return fetch("https://graphql.anilist.co", {

@@ -28,4 +28,5 @@ import "./CommandWatching";
 import "./CommandNext";
 import "./CommandPermission";
 import "./CommandPrefix";
+import "./CommandNextDay";
 
