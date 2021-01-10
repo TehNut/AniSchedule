@@ -19,7 +19,11 @@ export default new Command({
       const response = await query(watchingQuery, { watched: channelStore.shows, page });
       let description = "";
       response.data.Page.media.forEach((m: any) => {
-        const nextLine = `\n• [${m.title.romaji}](${m.siteUrl}) (~${formatTime(m.nextAiringEpisode.timeUntilAiring)})`;
+        if (m.status === "FINISHED" || m.status === "CANCELLED") {
+          channelStore.shows = channelStore.shows.filter(s => s !== m.id);
+          return;
+        }
+        const nextLine = `\n• [${m.title.romaji}](${m.siteUrl})${m.nextAiringEpisode ? `(~${formatTime(m.nextAiringEpisode.timeUntilAiring)})` : ''}`;
         if (1000 - description.length < nextLine.length) {
           sendWatchingList(description, message, message.channel);
           description = "";
@@ -40,7 +44,7 @@ export default new Command({
         reply(message, "No currently airing shows are being announced.");
     }
 
-    handleWatchingPage(1);
+    await handleWatchingPage(1);
     resolve();
   }
 });
