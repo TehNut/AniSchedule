@@ -1,5 +1,6 @@
 import { EmbedOptions } from "eris";
 import { getPermissionString } from "../Permission";
+import { reply } from "../Util";
 import Command, { commands } from "./Command";
 
 export default new Command({
@@ -14,14 +15,14 @@ export default new Command({
         icon_url: client.user.avatarURL
       },
       color: 4044018,
-      description: `[GitHub](https://github.com/TehNut/AniSchedule) • [Author](https://anilist.co/user/42069/)\nFor information on a specific command, use \`${serverStore.prefix}help <command>\``,
+      description: `[GitHub](https://github.com/TehNut/AniSchedule) • [Author](https://anilist.co/user/42069/)\nFor information on a specific command, use \`${serverStore.prefix}help <command>\`. Do not use the prefix for getting specific command help.`,
       fields: []
     };
 
     if (args.length > 0) {
       const searched = commands.find(c => c.options.name.toLowerCase() === args[0].toLowerCase());
       if (!searched) {
-        message.channel.createMessage(`Unknown command name "${args[0]}"`);
+        reply(message, `Unknown command name "${args[0]}"`);
         return resolve();
       }
 
@@ -37,7 +38,10 @@ export default new Command({
       });
     }
 
-    message.channel.createMessage({ embed });
+    message.channel.createMessage({ 
+      embed,
+      messageReferenceID: message.id
+     });
     resolve();
   }
 });

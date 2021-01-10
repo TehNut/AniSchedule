@@ -1,8 +1,8 @@
-import { query, formatTime } from "../Util";
+import { query, formatTime, reply } from "../Util";
 import Command from "./Command";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { TextableChannel } from "eris";
+import { Message, TextableChannel } from "eris";
 
 const watchingQuery = readFileSync(join(__dirname, "../query/Watching.graphql"), "utf8");
 
@@ -21,7 +21,7 @@ export default new Command({
       response.data.Page.media.forEach((m: any) => {
         const nextLine = `\n• [${m.title.romaji}](${m.siteUrl}) (~${formatTime(m.nextAiringEpisode.timeUntilAiring)})`;
         if (1000 - description.length < nextLine.length) {
-          sendWatchingList(description, message.channel);
+          sendWatchingList(description, message, message.channel);
           description = "";
         }
 
@@ -29,7 +29,7 @@ export default new Command({
       });
 
       if (description.length !== 0)
-        sendWatchingList(description, message.channel);
+        sendWatchingList(description, message, message.channel);
 
       if (response.data.Page.pageInfo.hasNextPage) {
         handleWatchingPage(response.data.Page.pageInfo.currentPage + 1);
@@ -37,7 +37,7 @@ export default new Command({
       }
 
       if (description.length === 0)
-        message.channel.createMessage("No currently airing shows are being announced.");
+        reply(message, "No currently airing shows are being announced.");
     }
 
     handleWatchingPage(1);
@@ -45,7 +45,7 @@ export default new Command({
   }
 });
 
-function sendWatchingList(description: string, channel: TextableChannel) {
+function sendWatchingList(description: string, message: Message, channel: TextableChannel) {
   const embed = {
     title: "Current announcements",
     color: 4044018,
@@ -56,5 +56,8 @@ function sendWatchingList(description: string, channel: TextableChannel) {
     },
     description
   };
-  channel.createMessage({embed});
+  channel.createMessage({
+    embed,
+    messageReferenceID: message.id
+  });
 }

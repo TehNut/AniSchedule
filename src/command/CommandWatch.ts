@@ -1,4 +1,4 @@
-import { getMediaId } from "../Util";
+import { getMediaId, reply } from "../Util";
 import Command from "./Command";
 import { checkPermission } from "../Permission";
 
@@ -24,7 +24,7 @@ export default new Command({
     }
 
     if (failures.length > 0) {
-      await message.channel.createMessage(`There were issues adding ${failures
+      await reply(message, `There were issues adding ${failures
         .map(f => f.startsWith("https://") ? `<${f}>` : f)
         .reduce((prev, curr, idx) => idx === 0 ? curr : prev + ", " + curr)}`);
     }

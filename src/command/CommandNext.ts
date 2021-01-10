@@ -28,7 +28,10 @@ export default new Command({
 
     const anime = response.data.Page.airingSchedules[0];
     const embed = createAnnouncementEmbed(anime, new Date(anime.airingAt * 1000), true);
-    message.channel.createMessage({ embed });
+    message.channel.createMessage({ 
+      embed,
+      messageReferenceID: message.id
+    });
     resolve();
   }
 });

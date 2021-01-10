@@ -1,6 +1,5 @@
 import fetch from "node-fetch";
-import { Embed } from "eris";
-import { ServerStorage } from "./DataStore";
+import { Embed, Message, TextableChannel } from "eris";
 
 export async function query(query: string, variables?: any) {
   return fetch("https://graphql.anilist.co", {
@@ -135,4 +134,11 @@ export function formatTime(seconds: number, appendSeconds?: boolean) {
     ret += (ret.length === 0 ? "" : " ") + time.seconds + "s";
 
   return ret;
+}
+
+export function reply(message: Message, content: string): Promise<Message<TextableChannel>> {
+  return message.channel.createMessage({
+    content,
+    messageReferenceID: message.id
+  });
 }

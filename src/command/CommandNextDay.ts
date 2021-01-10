@@ -29,7 +29,10 @@ export default new Command({
 
       response.data.Page.airingSchedules.forEach((e: any) => {
         const embed = createAnnouncementEmbed(e, new Date(e.airingAt * 1000), true);
-        message.channel.createMessage({ embed });
+        message.channel.createMessage({ 
+          embed,
+          messageReferenceID: message.id
+        });
       });
 
       if (response.data.Page.pageInfo.hasNextPage)
