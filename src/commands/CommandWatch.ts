@@ -1,17 +1,17 @@
-import { Client, CommandInteraction, GuildChannel } from "discord.js";
-import { WatchConfig } from "../Model";
-import { query } from "../Util";
+import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
+import { ServerConfig } from "../Model";
+import { query, getMediaId } from "../Util";
 import Command from "./Command";
 
 export default class CommandWatch extends Command {
   constructor() {
     super({
       name: "watch",
-      description: "Adds a new anime to be announced in this channel.",
+      description: "Adds a new anime to be announced.",
       options: [
         {
           name: "anime",
-          description: "This can be an AniList ID, AniList URL, MyAnimeList ID, or MyAnimeListURL",
+          description: "This can be an AniList ID, AniList URL, or MyAnimeListURL",
           type: "STRING",
           required: true
         },
@@ -40,7 +40,7 @@ export default class CommandWatch extends Command {
     });
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction) {
+  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>) {
     // TODO check permission
     const { value } = interaction.options.get("anime") as { value: string };
     const { channel } = interaction.options.has("channel") ? interaction.options.get("channel") as { channel: GuildChannel } : { channel: interaction.channel };
@@ -53,7 +53,7 @@ export default class CommandWatch extends Command {
         ephemeral: true,
         content: "We couldn't find that anime! Please check your input and try again"
       });
-      return;
+      return false;
     }
 
     if (channel.type === "voice") {
@@ -61,52 +61,37 @@ export default class CommandWatch extends Command {
         ephemeral: true,
         content: "Announcements cannot be made in voice channels."
       });
-      return;
+      return false;
     }
 
-    // TODO Save the watch config to the server config
-    const watchConfig: WatchConfig = {
+    let serverConfig: ServerConfig = data[interaction.guildID];
+    if (!serverConfig) {
+      serverConfig = data[interaction.guildID] = {
+        permission: "OWNER",
+        titleFormat: "ROMAJI",
+        watching: []
+      } as ServerConfig;
+    }
+
+    if (serverConfig.watching.find(w => w.anilistId === anilistId && w.channelId === channel.id)) {
+      interaction.reply({
+        ephemeral: true,
+        content: `That show is already being announced in ${channel.toString()}`
+      });
+      return false;
+    }
+
+    serverConfig.watching.push({
       anilistId,
       channelId: channel.id,
       createThreads,
       threadArchiveTime: threadArchiveTime as 60 | 1440 | 4320 | 10080
-    }
+    }); 
 
     const media = (await query("query($id: Int!) { Media(id: $id) { id title { romaji } } }", { id: anilistId })).data.Media;
     interaction.reply({
       content: `Announcements will now be made for [${media.title.romaji}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
     });
+    return true;
   }
-}
-
-
-const alIdRegex = /anilist\.co\/anime\/(.\d*)/;
-const malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
-
-export async function getMediaId(input: string): Promise<number | null> {
-  // First we try directly parsing the input in case it's the standalone ID
-  const output = parseInt(input);
-  if (output)
-    return output;
-
-  // If that fails, we try parsing it with regex to pull the ID from an AniList link
-  let match = alIdRegex.exec(input);
-  // If there's a match, parse it and return that
-  if (match)
-    return parseInt(match[1]);
-
-  // If that fails, we try parsing it with another regex to get an ID from a MAL link
-  match = malIdRegex.exec(input);
-  // If we can't find a MAL ID in the URL, just return null;
-  if (!match)
-    return null;
-
-  return await query("query($malId: Int) { Media(idMal: $malId) { id } }", { malId: match[1] }).then(res => {
-    if (res.errors) {
-      console.log(JSON.stringify(res.errors));
-      return;
-    }
-
-    return res.data.Media.id;
-  });
 }

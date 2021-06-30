@@ -1,16 +1,28 @@
 import { config } from "dotenv";
 config();
-import { ButtonInteraction, Client, CommandInteraction, Intents, Snowflake } from "discord.js";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { Client, CommandInteraction, Intents, Snowflake } from "discord.js";
+import { ServerConfig } from "./Model";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
+import CommandUnwatch from "./commands/CommandUnwatch";
 
 commands.push(new CommandWatch());
+commands.push(new CommandUnwatch());
 
+let data: Record<Snowflake, ServerConfig> = function() {
+  if (existsSync("./data.json"))
+    return JSON.parse(readFileSync("./data.json", "utf-8"));
+
+  writeFileSync("./data.json", "{}", { encoding: "utf-8" });
+  return {};
+}();
 const client = new Client({
   intents: [ Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES ]
 });
 
 client.on("ready", async () => {
+  console.log(data)
   const commandManager = process.env.MODE === "DEV" ? client.guilds.cache.get(process.env.DEV_SERVER_ID as Snowflake).commands : client.application.commands;
   await commandManager.set(commands.map(c => c.data));
 });
@@ -18,17 +30,12 @@ client.on("ready", async () => {
 client.on("interaction", async interaction => {
   if (interaction.isCommand())
     await handleCommands(interaction);
-  if (interaction.isButton())
-    await handleButtons(interaction);
 });
 
 client.login(process.env.BOT_TOKEN);
 
 async function handleCommands(interaction: CommandInteraction) {
   const command = commands.find(c => c.data.name === interaction.command.name);
-  await command.handleInteraction(client, interaction);
-}
-
-async function handleButtons(interaction: ButtonInteraction) {
-
+  if (await command.handleInteraction(client, interaction, data))
+    writeFileSync("./data.json", JSON.stringify(data));
 }

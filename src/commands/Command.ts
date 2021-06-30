@@ -1,5 +1,5 @@
-import { Client, ApplicationCommandData, CommandInteraction } from "discord.js";
-import CommandWatch from "./CommandWatch";
+import { Client, ApplicationCommandData, CommandInteraction, Snowflake } from "discord.js";
+import { ServerConfig } from "../Model";
 
 export default abstract class Command {
   data: ApplicationCommandData;
@@ -8,7 +8,7 @@ export default abstract class Command {
     this.data = data;
   }
 
-  abstract handleInteraction(client: Client, interaction: CommandInteraction): Promise<void>;
+  abstract handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean>;
 }
 
 export const commands: Command[] = [];
