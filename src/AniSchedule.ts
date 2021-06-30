@@ -6,9 +6,11 @@ import { ServerConfig } from "./Model";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
 import CommandUnwatch from "./commands/CommandUnwatch";
+import CommandWatching from "./commands/CommandWatching";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
+commands.push(new CommandWatching());
 
 let data: Record<Snowflake, ServerConfig> = function() {
   if (existsSync("./data.json"))
@@ -37,5 +39,5 @@ client.login(process.env.BOT_TOKEN);
 async function handleCommands(interaction: CommandInteraction) {
   const command = commands.find(c => c.data.name === interaction.command.name);
   if (await command.handleInteraction(client, interaction, data))
-    writeFileSync("./data.json", JSON.stringify(data));
+    writeFileSync("./data.json", JSON.stringify(data, null, process.env.MODE === "DEV" ? 2 : 0));
 }
