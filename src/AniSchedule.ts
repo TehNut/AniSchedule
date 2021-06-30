@@ -7,10 +7,12 @@ import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
 import CommandUnwatch from "./commands/CommandUnwatch";
 import CommandWatching from "./commands/CommandWatching";
+import CommandEdit from "./commands/CommandEdit";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
 commands.push(new CommandWatching());
+commands.push(new CommandEdit());
 
 let data: Record<Snowflake, ServerConfig> = function() {
   if (existsSync("./data.json"))
@@ -24,7 +26,6 @@ const client = new Client({
 });
 
 client.on("ready", async () => {
-  console.log(data)
   const commandManager = process.env.MODE === "DEV" ? client.guilds.cache.get(process.env.DEV_SERVER_ID as Snowflake).commands : client.application.commands;
   await commandManager.set(commands.map(c => c.data));
 });
