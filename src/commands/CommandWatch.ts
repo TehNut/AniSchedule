@@ -81,6 +81,15 @@ export default class CommandWatch extends Command {
       return false;
     }
 
+    const media = (await query("query($id: Int!) { Media(id: $id) { id status title { native romaji english } } }", { id: anilistId })).data.Media;
+    if (media.status !== "NOT_YET_RELEASED" || media.status !== "CURRENT") {
+      interaction.reply({
+        ephemeral: true,
+        content: `${getTitle(media.title, serverConfig.titleFormat)} is not an upcoming or currently airing anime.`
+      });
+      return false;
+    }
+
     serverConfig.watching.push({
       anilistId,
       channelId: channel.id,
@@ -88,7 +97,6 @@ export default class CommandWatch extends Command {
       threadArchiveTime: threadArchiveTime as 60 | 1440 | 4320 | 10080
     }); 
 
-    const media = (await query("query($id: Int!) { Media(id: $id) { id title { native romaji english } } }", { id: anilistId })).data.Media;
     interaction.reply({
       content: `Announcements will now be made for [${getTitle(media.title, serverConfig.titleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
     });
