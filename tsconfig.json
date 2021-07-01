@@ -4,6 +4,7 @@
     "moduleResolution": "Node",
     "removeComments": true,
     "sourceMap": true,
+    "resolveJsonModule": true,
     "outDir": "./build"
   }
 }
