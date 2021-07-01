@@ -1,6 +1,6 @@
 import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
 import { ServerConfig } from "../Model";
-import { query, getMediaId } from "../Util";
+import { query, getMediaId, getTitle } from "../Util";
 import Command from "./Command";
 
 export default class CommandWatch extends Command {
@@ -88,9 +88,9 @@ export default class CommandWatch extends Command {
       threadArchiveTime: threadArchiveTime as 60 | 1440 | 4320 | 10080
     }); 
 
-    const media = (await query("query($id: Int!) { Media(id: $id) { id title { romaji } } }", { id: anilistId })).data.Media;
+    const media = (await query("query($id: Int!) { Media(id: $id) { id title { native romaji english } } }", { id: anilistId })).data.Media;
     interaction.reply({
-      content: `Announcements will now be made for [${media.title.romaji}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
+      content: `Announcements will now be made for [${getTitle(media.title, serverConfig.titleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
     });
     return true;
   }

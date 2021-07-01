@@ -8,11 +8,13 @@ import CommandWatch from "./commands/CommandWatch";
 import CommandUnwatch from "./commands/CommandUnwatch";
 import CommandWatching from "./commands/CommandWatching";
 import CommandEdit from "./commands/CommandEdit";
+import CommandTitleFormat from "./commands/CommandTitleFormat";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
 commands.push(new CommandWatching());
 commands.push(new CommandEdit());
+commands.push(new CommandTitleFormat());
 
 let data: Record<Snowflake, ServerConfig> = function() {
   if (existsSync("./data.json"))

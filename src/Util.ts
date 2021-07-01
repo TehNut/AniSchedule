@@ -45,6 +45,15 @@ export async function getMediaId(input: string): Promise<number | null> {
   });
 }
 
+export function getTitle(title: { native: string, romaji: string, english?: string }, wanted: "NATIVE" | "ROMAJI" | "ENGLISH") {
+  switch (wanted) {
+    case "NATIVE": return title.native;
+    case "ROMAJI": return title.romaji;
+    case "ENGLISH": return title.english || title.romaji;
+    default: return title.romaji;
+  }
+}
+
 export function parseTime(seconds: number) {
   let weeks = Math.floor(seconds / (3600 * 24 * 7));
   seconds -= weeks * 3600 * 24 * 7;
