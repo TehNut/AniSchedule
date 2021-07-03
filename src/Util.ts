@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { MediaFormat, MediaTitle, TitleFormat } from "./Model";
 
 export async function query(query: string, variables?: any) {
   return fetch("https://graphql.anilist.co", {
@@ -45,12 +46,23 @@ export async function getMediaId(input: string): Promise<number | null> {
   });
 }
 
-export function getTitle(title: { native: string, romaji: string, english?: string }, wanted: "NATIVE" | "ROMAJI" | "ENGLISH") {
+export function getTitle(title: MediaTitle, wanted: TitleFormat) {
   switch (wanted) {
     case "NATIVE": return title.native;
     case "ROMAJI": return title.romaji;
     case "ENGLISH": return title.english || title.romaji;
     default: return title.romaji;
+  }
+}
+
+export function readableFormat(format: MediaFormat) {
+  switch(format) {
+    case "ONA":
+    case "OVA":
+    case "TV": return format;
+    case "MOVIE": return "Movie";
+    case "SPECIAL": return "Special";
+    case "TV_SHORT": "TV Short";
   }
 }
 
@@ -85,3 +97,10 @@ export function formatTime(seconds: number, appendSeconds?: boolean) {
 
   return ret;
 }
+
+export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+  const chunked: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize)
+    chunked.push(array.slice(i, i + chunkSize));
+  return chunked;
+};

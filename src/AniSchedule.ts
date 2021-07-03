@@ -10,6 +10,7 @@ import CommandWatching from "./commands/CommandWatching";
 import CommandEdit from "./commands/CommandEdit";
 import CommandTitleFormat from "./commands/CommandTitleFormat";
 import CommandAbout from "./commands/CommandAbout";
+import { initScheduler } from "./Scheduler";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
@@ -25,9 +26,14 @@ let data: Record<Snowflake, ServerConfig> = function() {
   writeFileSync("./data.json", "{}", { encoding: "utf-8" });
   return {};
 }();
-const client = new Client({
+export const client = new Client({
   intents: [ Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES ]
 });
+
+async function init() {
+  await initScheduler(data);
+  await client.login(process.env.BOT_TOKEN);
+}
 
 client.on("ready", async () => {
   const commandManager = process.env.MODE === "DEV" ? client.guilds.cache.get(process.env.DEV_SERVER_ID as Snowflake).commands : client.application.commands;
@@ -39,10 +45,10 @@ client.on("interaction", async interaction => {
     await handleCommands(interaction);
 });
 
-client.login(process.env.BOT_TOKEN);
-
 async function handleCommands(interaction: CommandInteraction) {
   const command = commands.find(c => c.data.name === interaction.command.name);
   if (await command.handleInteraction(client, interaction, data))
     writeFileSync("./data.json", JSON.stringify(data, null, process.env.MODE === "DEV" ? 2 : 0));
 }
+
+init();

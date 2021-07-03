@@ -1,5 +1,6 @@
 import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
 import { ServerConfig } from "../Model";
+import { scheduleAnnouncements } from "../Scheduler";
 import { query, getMediaId, getTitle } from "../Util";
 import Command from "./Command";
 
@@ -95,7 +96,9 @@ export default class CommandWatch extends Command {
       channelId: channel.id,
       createThreads,
       threadArchiveTime: threadArchiveTime as 60 | 1440 | 4320 | 10080
-    }); 
+    });
+
+    await scheduleAnnouncements([ anilistId ], Object.values(data));
 
     interaction.reply({
       content: `Announcements will now be made for [${getTitle(media.title, serverConfig.titleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
