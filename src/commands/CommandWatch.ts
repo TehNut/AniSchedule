@@ -83,7 +83,7 @@ export default class CommandWatch extends Command {
     }
 
     const media = (await query("query($id: Int!) { Media(id: $id) { id status title { native romaji english } } }", { id: anilistId })).data.Media;
-    if (![ "NOT_YET_RELEASED", "CURRENT" ].includes(media.status)) {
+    if (![ "NOT_YET_RELEASED", "RELEASING" ].includes(media.status)) {
       interaction.reply({
         ephemeral: true,
         content: `${getTitle(media.title, serverConfig.titleFormat)} is not an upcoming or currently airing anime.`
