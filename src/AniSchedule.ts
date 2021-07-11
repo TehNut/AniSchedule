@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 config();
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { Client, CommandInteraction, Intents, Snowflake } from "discord.js";
+import { Client, CommandInteraction, Intents, MessageComponentInteraction, Snowflake } from "discord.js";
 import { ServerConfig } from "./Model";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
@@ -11,6 +11,7 @@ import CommandEdit from "./commands/CommandEdit";
 import CommandTitleFormat from "./commands/CommandTitleFormat";
 import CommandAbout from "./commands/CommandAbout";
 import { initScheduler } from "./Scheduler";
+import CommandUpcoming from "./commands/CommandUpcoming";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
@@ -18,6 +19,7 @@ commands.push(new CommandWatching());
 commands.push(new CommandEdit());
 commands.push(new CommandTitleFormat());
 commands.push(new CommandAbout());
+commands.push(new CommandUpcoming());
 
 let data: Record<Snowflake, ServerConfig> = function() {
   if (existsSync("./data.json"))
@@ -33,6 +35,7 @@ export const client = new Client({
 async function init() {
   await initScheduler(data);
   await client.login(process.env.BOT_TOKEN);
+  console.log(`Logged in as ${client.user.username}#${client.user.discriminator}`);
 }
 
 client.on("ready", async () => {
@@ -41,14 +44,36 @@ client.on("ready", async () => {
 });
 
 client.on("interaction", async interaction => {
-  if (interaction.isCommand())
-    await handleCommands(interaction);
+  try {
+    if (interaction.isCommand())
+      await handleCommands(interaction);
+
+    if (interaction.isMessageComponent())
+      await handleMessageComponents(interaction);
+  } catch (e) {
+    console.error("Error handing interaction", e);
+  }
 });
 
 async function handleCommands(interaction: CommandInteraction) {
-  const command = commands.find(c => c.data.name === interaction.command.name);
+  const command = commands.find(c => c.data.name === interaction.commandName);
+  if (!command) {
+    console.error(`Discord has passed unknown command "${interaction.commandName}" to us.`);
+    return;
+  }
   if (await command.handleInteraction(client, interaction, data))
     writeFileSync("./data.json", JSON.stringify(data, null, process.env.MODE === "DEV" ? 2 : 0));
+}
+
+async function handleMessageComponents(interaction: MessageComponentInteraction) {
+  // Allow components to use IDs as a way to direct to the correct command by specifying the command name before a ":" 
+  const idSplit = interaction.customID.split(":");
+  const command = commands.find(c => c.data.name === idSplit[0]);
+  if (command) {
+    // Strip the command name off the ID so it can be more useful to the command
+    interaction.customID = idSplit[1];
+    await command.handleMessageComponents(client, interaction, data)
+  }
 }
 
 init();

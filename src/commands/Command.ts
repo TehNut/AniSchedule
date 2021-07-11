@@ -1,4 +1,4 @@
-import { Client, ApplicationCommandData, CommandInteraction, Snowflake } from "discord.js";
+import { Client, ApplicationCommandData, CommandInteraction, Snowflake, ButtonInteraction, MessageComponentInteraction } from "discord.js";
 import { ServerConfig } from "../Model";
 
 export default abstract class Command {
@@ -9,6 +9,10 @@ export default abstract class Command {
   }
 
   abstract handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean>;
+
+  async handleMessageComponents(client: Client, componentInteraction: MessageComponentInteraction, data: Record<Snowflake, ServerConfig>): Promise<void> {
+    
+  }
 }
 
 export const commands: Command[] = [];

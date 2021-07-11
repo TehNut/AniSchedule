@@ -17,7 +17,7 @@ export type TitleFormat = "NATIVE" | "ROMAJI" | "ENGLISH";
 
 export type Media = {
   id: number;
-  siteUrl: string;
+  siteUrl: `https://anilist.co/anime/${number}`;
   title: MediaTitle;
   duration: number;
   episodes?: number;
@@ -41,6 +41,7 @@ export type MediaTitle = {
 }
 
 export type AiringSchedule = {
+  id: number;
   media: Media;
   episode: number;
   airingAt: number;
