@@ -72,7 +72,8 @@ async function handleMessageComponents(interaction: MessageComponentInteraction)
   if (command) {
     // Strip the command name off the ID so it can be more useful to the command
     interaction.customID = idSplit[1];
-    await command.handleMessageComponents(client, interaction, data)
+    if (await command.handleMessageComponents(client, interaction, data))
+      writeFileSync("./data.json", JSON.stringify(data, null, process.env.MODE === "DEV" ? 2 : 0));
   }
 }
 

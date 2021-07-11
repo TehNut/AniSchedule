@@ -99,7 +99,7 @@ export default class CommandUpcoming extends Command {
     return false;
   }
 
-  async handleMessageComponents(client: Client, componentInteraction: MessageComponentInteraction, data: Record<Snowflake, ServerConfig>): Promise<void> {
+  async handleMessageComponents(client: Client, componentInteraction: MessageComponentInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
     const serverConfig = data[componentInteraction.guildID] as ServerConfig;
     if (componentInteraction.isSelectMenu() && componentInteraction.customID === "episode-selector") {
       const airingId = parseInt(componentInteraction.values[0]);
@@ -110,5 +110,6 @@ export default class CommandUpcoming extends Command {
         embeds: [ embed ]
       })
     }
+    return false;
   }
 }
