@@ -29,6 +29,7 @@ const scheduleQuery = `query($page: Int, $amount: Int = 50, $ids: [Int!]!, $next
           url
         }
       }
+      id
       episode
       airingAt
       timeUntilAiring
@@ -67,6 +68,7 @@ export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
   // Re-initialize the scheduler 1 minute before the end of the last tracked time window
   setTimeout(() => initScheduler(data), endTime - Date.now() - (60 * 1000));
 }
+
 /**
  * Schedules announcements for the given media IDs so long as they have episodes airing in the given time window.
  * 
@@ -78,6 +80,7 @@ export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
 export async function scheduleAnnouncements(mediaIds: number[], serverConfigs: ServerConfig[], startTime: number = Date.now(), endTime: number = Date.now() + (24 * 60 * 60 * 1000)) {
   const upcomingEpisodes = await getUpcomingEpisodes(mediaIds, startTime, endTime);
   upcomingEpisodes.forEach(e => {
+    console.log(`Scheduled announcement for ${e.media.title.romaji} at ${new Date(e.airingAt * 1000)}`);
     const timeout = setTimeout(() => sendAnnouncement(serverConfigs, e), e.timeUntilAiring * 1000);
     announcementTimouts.push(timeout);
   });
@@ -90,7 +93,7 @@ export async function scheduleAnnouncements(mediaIds: number[], serverConfigs: S
  * @param startTime The start of the time window in ms
  * @param endTime The end of the time window in ms
  */
-export async function getUpcomingEpisodes(mediaIds: number[], startTime: number, endTime: number): Promise<AiringSchedule[]> {
+export async function getUpcomingEpisodes(mediaIds: number[], startTime: number, endTime: number, pageInfo?: { page: number, perPage: number }): Promise<AiringSchedule[]> {
   startTime = Math.floor(startTime / 1000);
   endTime = Math.floor(endTime / 1000);
 
@@ -98,7 +101,8 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
 
   async function fetchSchedule(page: number) {
     const response = (await query(scheduleQuery, { 
-      page, 
+      page: pageInfo ? pageInfo.page : page,
+      amount: pageInfo ? pageInfo.perPage : undefined,
       ids: mediaIds,
       dateStart: startTime,
       nextDay: endTime
@@ -106,7 +110,7 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
     
     upcomingEpisodes.push(...response.airingSchedules as AiringSchedule[]);
 
-    if (response.pageInfo.hasNextPage)
+    if (!pageInfo && response.pageInfo.hasNextPage)
       await fetchSchedule(page + 1);
   }
 
@@ -121,16 +125,27 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
  * @param airing The airing schedule to announce
  */
 export async function sendAnnouncement(serverConfigs: ServerConfig[], airing: AiringSchedule) {
-  serverConfigs.forEach(serverConfig => {
-    serverConfig.watching.filter(w => w.anilistId === airing.media.id).forEach(watch => {
+  for (const serverConfig of serverConfigs) {
+    let watchConfigs = serverConfig.watching.filter(w => w.anilistId === airing.media.id); 
+    for (const watch of watchConfigs) {
       const channel = client.channels.cache.get(watch.channelId) as TextChannel;     
       if (channel) {
-        channel.send({
-          embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat) ]
+        const message = await channel.send({
+          embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat) ],
         });
+        console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
+        // TODO Remove this try/catch when threads launch
+        // Threads are not fully available yet. There is no future-proof way of determining of a server supports threads or not so until threads launch, we will just catch any errors so at least we don't crash.
+        try {
+          if (watch.createThreads) {
+            message.startThread(`${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`, watch.threadArchiveTime)
+          }
+        } catch (e) {
+          // no-op
+        }
       }
-    });
-  });
+    }
+  }
 }
 
 /**
