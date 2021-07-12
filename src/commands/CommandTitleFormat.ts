@@ -28,9 +28,9 @@ export default class CommandConfig extends Command {
     // TODO Check permission
     const { value: format } = interaction.options.get("format") as { value: string };
      
-    let serverConfig: ServerConfig = data[interaction.guildID];
+    let serverConfig: ServerConfig = data[interaction.guildId];
     if (!serverConfig) {
-      serverConfig = data[interaction.guildID] = {
+      serverConfig = data[interaction.guildId] = {
         permission: "OWNER",
         titleFormat: "ROMAJI",
         watching: []

@@ -57,7 +57,7 @@ export default class CommandEdit extends Command {
       return false;
     }
 
-    if (channel.type === "voice") {
+    if (channel.type === "GUILD_VOICE") {
       interaction.reply({
         ephemeral: true,
         content: "Announcements cannot be made in voice channels."
@@ -65,7 +65,7 @@ export default class CommandEdit extends Command {
       return false;
     }
 
-    const watchConfig = (data[interaction.guildID]?.watching as WatchConfig[]).find(w => w.anilistId === anilistId && w.channelId === channel.id);
+    const watchConfig = (data[interaction.guildId]?.watching as WatchConfig[]).find(w => w.anilistId === anilistId && w.channelId === channel.id);
     if (!watchConfig) {
       interaction.reply({
         ephemeral: true,
