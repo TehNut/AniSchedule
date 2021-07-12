@@ -9,7 +9,7 @@
     "run": "node ./build/AniSchedule.js"
   },
   "dependencies": {
-    "discord.js": "13.0.0-dev.edab5af.1624996138",
+    "discord.js": "13.0.0-dev.a8984bc.1626048234",
     "dotenv": "10.0.0",
     "node-fetch": "2.6.1"
   },

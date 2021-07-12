@@ -57,7 +57,7 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    if (channel.type === "voice") {
+    if (channel.type === "GUILD_VOICE") {
       interaction.reply({
         ephemeral: true,
         content: "Announcements cannot be made in voice channels."
@@ -65,9 +65,9 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    let serverConfig: ServerConfig = data[interaction.guildID];
+    let serverConfig: ServerConfig = data[interaction.guildId];
     if (!serverConfig) {
-      serverConfig = data[interaction.guildID] = {
+      serverConfig = data[interaction.guildId] = {
         permission: "OWNER",
         titleFormat: "ROMAJI",
         watching: []

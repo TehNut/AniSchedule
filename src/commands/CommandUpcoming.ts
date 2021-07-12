@@ -49,14 +49,14 @@ export default class CommandUpcoming extends Command {
   }
 
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
-    const serverConfig = data[interaction.guildID] as ServerConfig;
+    const serverConfig = data[interaction.guildId] as ServerConfig;
     const startTime = Date.now();
     let days = interaction.options.has("days") ? interaction.options.get("days").value as number : 1;
     if (days > 7)
       days = 7;
 
     const endTime = startTime + (days * 24 * 60 * 60 * 1000);
-    const upcoming = await getUpcomingEpisodes(serverConfig.watching.filter(w => w.channelId === interaction.channelID).map(w => w.anilistId), startTime, endTime);
+    const upcoming = await getUpcomingEpisodes(serverConfig.watching.filter(w => w.channelId === interaction.channelId).map(w => w.anilistId), startTime, endTime);
     if (upcoming.length === 0) {
       interaction.reply({
         content: `Nothing upcoming in the next ${days} day(s)`,
@@ -69,7 +69,7 @@ export default class CommandUpcoming extends Command {
 
     if (upcoming.length > 1) {
       const selector = new MessageSelectMenu()
-        .setCustomID("upcoming:episode-selector")
+        .setCustomId("upcoming:episode-selector")
         .setPlaceholder("Check another upcoming episode");
       upcoming.forEach(a => {
         let title = getTitle(a.media.title, serverConfig.titleFormat);
@@ -100,8 +100,8 @@ export default class CommandUpcoming extends Command {
   }
 
   async handleMessageComponents(client: Client, componentInteraction: MessageComponentInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
-    const serverConfig = data[componentInteraction.guildID] as ServerConfig;
-    if (componentInteraction.isSelectMenu() && componentInteraction.customID === "episode-selector") {
+    const serverConfig = data[componentInteraction.guildId] as ServerConfig;
+    if (componentInteraction.isSelectMenu() && componentInteraction.customId === "episode-selector") {
       const airingId = parseInt(componentInteraction.values[0]);
       const episode: AiringSchedule = (await query(singleEpisodeQuery, { airingId })).data.AiringSchedule;
       const embed = createAnnouncementEmbed(episode, serverConfig.titleFormat);

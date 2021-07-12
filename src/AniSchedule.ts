@@ -67,11 +67,11 @@ async function handleCommands(interaction: CommandInteraction) {
 
 async function handleMessageComponents(interaction: MessageComponentInteraction) {
   // Allow components to use IDs as a way to direct to the correct command by specifying the command name before a ":" 
-  const idSplit = interaction.customID.split(":");
+  const idSplit = interaction.customId.split(":");
   const command = commands.find(c => c.data.name === idSplit[0]);
   if (command) {
     // Strip the command name off the ID so it can be more useful to the command
-    interaction.customID = idSplit[1];
+    interaction.customId = idSplit[1];
     if (await command.handleMessageComponents(client, interaction, data))
       writeFileSync("./data.json", JSON.stringify(data, null, process.env.MODE === "DEV" ? 2 : 0));
   }
