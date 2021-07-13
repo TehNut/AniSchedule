@@ -9,6 +9,7 @@ export default class CommandEdit extends Command {
     super({
       name: "edit",
       description: "Updates an existing announcement configuration.",
+      defaultPermission: false,
       options: [
         {
           name: "anime",

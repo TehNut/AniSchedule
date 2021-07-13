@@ -8,6 +8,7 @@ export default class CommandWatch extends Command {
     super({
       name: "unwatch",
       description: "Removes an anime announcement.",
+      defaultPermission: false,
       options: [
         {
           name: "anime",

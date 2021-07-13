@@ -1,7 +1,8 @@
 import { Snowflake } from "discord.js";
 
 export type ServerConfig = {
-  permission: "ANY" | "CHANNEL_MANAGE" | "OWNER";
+  permission: PermissionType;
+  permissionRoleId: Snowflake;
   titleFormat: TitleFormat;
   watching: WatchConfig[];
 }
@@ -12,6 +13,8 @@ export type WatchConfig = {
   createThreads: boolean;
   threadArchiveTime: 60 | 1440 | 4320 | 10080; // 1 hour, 1 day, 3 days, 7 days
 }
+
+export type PermissionType = "ANY" | "ROLE" | "OWNER";
 
 export type TitleFormat = "NATIVE" | "ROMAJI" | "ENGLISH";
 

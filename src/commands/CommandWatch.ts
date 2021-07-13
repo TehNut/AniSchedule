@@ -9,6 +9,7 @@ export default class CommandWatch extends Command {
     super({
       name: "watch",
       description: "Adds a new anime to be announced.",
+      defaultPermission: false,
       options: [
         {
           name: "anime",
@@ -42,7 +43,6 @@ export default class CommandWatch extends Command {
   }
 
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>) {
-    // TODO check permission
     const { value } = interaction.options.get("anime") as { value: string };
     const { channel } = interaction.options.has("channel") ? interaction.options.get("channel") as { channel: GuildChannel } : { channel: interaction.channel };
     const { value: createThreads } = interaction.options.has("create_threads") ? interaction.options.get("create_threads") as { value: boolean } : { value: false };

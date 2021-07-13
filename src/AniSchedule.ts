@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 config();
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { Client, CommandInteraction, Intents, MessageComponentInteraction, Snowflake } from "discord.js";
+import { ApplicationCommand, Client, CommandInteraction, Intents, MessageComponentInteraction, Snowflake } from "discord.js";
 import { ServerConfig } from "./Model";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
@@ -12,6 +12,7 @@ import CommandTitleFormat from "./commands/CommandTitleFormat";
 import CommandAbout from "./commands/CommandAbout";
 import { initScheduler } from "./Scheduler";
 import CommandUpcoming from "./commands/CommandUpcoming";
+import CommandPermission from "./commands/CommandPermission";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
@@ -20,6 +21,9 @@ commands.push(new CommandEdit());
 commands.push(new CommandTitleFormat());
 commands.push(new CommandAbout());
 commands.push(new CommandUpcoming());
+commands.push(new CommandPermission());
+
+const commandIds: Record<string, { id: Snowflake, command: ApplicationCommand }> = {};
 
 let data: Record<Snowflake, ServerConfig> = function() {
   if (existsSync("./data.json"))
@@ -40,10 +44,35 @@ async function init() {
 
 client.on("ready", async () => {
   const commandManager = process.env.MODE === "DEV" ? client.guilds.cache.get(process.env.DEV_SERVER_ID as Snowflake).commands : client.application.commands;
-  await commandManager.set(commands.map(c => c.data));
+  const response = await commandManager.set(commands.map(c => c.data));
+  response.forEach((command, id) => commandIds[command.name] = { id, command });
+
+  client.guilds.cache.forEach(async guild => {
+    if (!guild.commands.cache.has(commandIds["permission"].id))
+      return;
+      
+    await guild.commands.permissions.add({
+      command: commandIds["permission"].command,
+      permissions: [
+        {
+          id: guild.ownerId,
+          type: "USER",
+          permission: true
+        }
+      ]
+    });
+  })
 });
 
-client.on("interaction", async interaction => {
+client.on("interactionCreate", async interaction => {
+  // For now, all interactions must be in a guild
+  if (!interaction.inGuild() && interaction.isCommand()) {
+    interaction.reply({
+      content: `${client.user.username} does not allow commands to be used in direct messages at this moment.`
+    });
+    return;
+  }
+    
   try {
     if (interaction.isCommand())
       await handleCommands(interaction);
@@ -78,3 +107,7 @@ async function handleMessageComponents(interaction: MessageComponentInteraction)
 }
 
 init();
+
+export function getCommand(commandName: string): { id: Snowflake, command: ApplicationCommand } | null {
+  return commandIds[commandName];
+}

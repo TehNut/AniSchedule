@@ -8,6 +8,7 @@ export default class CommandConfig extends Command {
     super({
       name: "title",
       description: "Changes the title display for this server.",
+      defaultPermission: false,
       options: [
         {
           name: "format",
