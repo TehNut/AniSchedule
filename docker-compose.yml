@@ -1,0 +1,12 @@
+version: '2'
+services:
+  bot:
+    build: .
+    command: npm run dev
+    volumes:
+      - .:/usr/app/
+      - /usr/app/node_modules
+    environment:
+      MODE: "${MODE}"
+      BOT_TOKEN: "${BOT_TOKEN}"
+      DEV_SERVER_ID: "${DEV_SERVER_ID}"
