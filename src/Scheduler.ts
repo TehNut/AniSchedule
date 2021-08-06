@@ -92,8 +92,13 @@ export async function sendAnnouncement(serverConfigs: ServerConfig[], airing: Ai
           embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat) ],
         });
         console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
-        if (watch.createThreads)
-          message.startThread(`${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`, watch.threadArchiveTime)
+        // If a server loses it's boost level, the thread archive time might be set too high
+        try {
+          if (watch.createThreads)
+            message.startThread(`${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`, watch.threadArchiveTime)
+        } catch (e) {
+          console.log("Failed to create thread", e.message || e);
+        }
       }
     }
   }

@@ -1,5 +1,12 @@
 import { Snowflake } from "discord.js";
 
+export enum ThreadArchiveTime {
+  ONE_HOUR = 60,
+  ONE_DAY = 1440,
+  THREE_DAYS = 4320,
+  SEVEN_DAYS = 10080
+}
+
 export type ServerConfig = {
   permission: PermissionType;
   permissionRoleId: Snowflake;
@@ -11,7 +18,7 @@ export type WatchConfig = {
   channelId: Snowflake;
   anilistId: number;
   createThreads: boolean;
-  threadArchiveTime: 60 | 1440 | 4320 | 10080; // 1 hour, 1 day, 3 days, 7 days
+  threadArchiveTime: ThreadArchiveTime;
 }
 
 export type PermissionType = "ANY" | "ROLE" | "OWNER";

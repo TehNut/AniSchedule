@@ -9,14 +9,14 @@
     "run": "node ./build/AniSchedule.js"
   },
   "dependencies": {
-    "discord.js": "13.0.0-dev.a8984bc.1626048234",
+    "discord.js": "^13.0.0-dev.t1628208261.a56ba09",
     "dotenv": "10.0.0",
     "node-fetch": "2.6.1"
   },
   "devDependencies": {
-    "@types/node": "15.12.5",
-    "@types/node-fetch": "2.5.10",
-    "ts-node-dev": "1.1.7",
-    "typescript": "4.3.4"
+    "@types/node": "16.4.13",
+    "@types/node-fetch": "2.5.12",
+    "ts-node-dev": "1.1.8",
+    "typescript": "4.3.5"
   }
 }

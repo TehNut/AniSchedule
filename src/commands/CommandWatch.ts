@@ -1,5 +1,5 @@
 import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
-import { ServerConfig } from "../Model";
+import { ServerConfig, ThreadArchiveTime } from "../Model";
 import { scheduleAnnouncements } from "../Scheduler";
 import { query, getMediaId, getTitle } from "../Util";
 import Command from "./Command";
@@ -32,10 +32,10 @@ export default class CommandWatch extends Command {
           description: "How long after the last message before the thread is archived. [1 day]",
           type: "INTEGER",
           choices: [
-            { name: "1 Hour", value: 60 },
-            { name: "1 Day", value: 1440 },
-            { name: "3 Days", value: 4320 },
-            { name: "7 days", value: 10080 },
+            { name: "1 Hour", value: ThreadArchiveTime.ONE_HOUR },
+            { name: "1 Day", value: ThreadArchiveTime.ONE_DAY },
+            { name: "3 Days", value: ThreadArchiveTime.THREE_DAYS },
+            { name: "7 days", value: ThreadArchiveTime.SEVEN_DAYS },
           ]
         }
       ]
@@ -46,7 +46,28 @@ export default class CommandWatch extends Command {
     const { value } = interaction.options.get("anime") as { value: string };
     const { channel } = interaction.options.has("channel") ? interaction.options.get("channel") as { channel: GuildChannel } : { channel: interaction.channel };
     const { value: createThreads } = interaction.options.has("create_threads") ? interaction.options.get("create_threads") as { value: boolean } : { value: false };
-    const { value: threadArchiveTime } = interaction.options.has("thread_archive") ? interaction.options.get("thread_archive") as { value: number } : { value: 1440 };
+    const { value: threadArchiveTime } = interaction.options.has("thread_archive") ? interaction.options.get("thread_archive") as { value: ThreadArchiveTime } : { value: ThreadArchiveTime.ONE_DAY };
+
+    switch(threadArchiveTime) {
+      case ThreadArchiveTime.THREE_DAYS: {
+        if (!interaction.guild.features.includes("THREE_DAY_THREAD_ARCHIVE")) {
+          interaction.reply({
+            ephemeral: true,
+            content: "This server does not have the ability to create threads with 3 day archival times."
+          })
+          return false;
+        }
+      }
+      case ThreadArchiveTime.SEVEN_DAYS: {
+        if (!interaction.guild.features.includes("SEVEN_DAY_THREAD_ARCHIVE")) {
+          interaction.reply({
+            ephemeral: true,
+            content: "This server does not have the ability to create threads with 7 day archival times."
+          })
+          return false;
+        }
+      }
+    }
 
     const anilistId = await getMediaId(value as string);
     if (!anilistId) {
@@ -87,7 +108,7 @@ export default class CommandWatch extends Command {
       anilistId,
       channelId: channel.id,
       createThreads,
-      threadArchiveTime: threadArchiveTime as 60 | 1440 | 4320 | 10080
+      threadArchiveTime
     });
 
     await scheduleAnnouncements([ anilistId ], Object.values(data));
