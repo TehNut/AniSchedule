@@ -1,8 +1,8 @@
 import { MessageEmbed, Snowflake, TextChannel } from "discord.js";
 import { AiringSchedule, ServerConfig, TitleFormat } from "./Model";
-import { getTitle, query, readableFormat } from "./Util";
+import { getTitle, getUniqueMediaIds, query, readableFormat } from "./Util";
 import { client } from "./AniSchedule";
-import { SCHEDULE_QUERY, STREAMING_SITES } from "./Constants";
+import { SCHEDULE_QUERY, SET_ACTIVITY, STREAMING_SITES } from "./Constants";
 
 const announcementTimouts: NodeJS.Timeout[] = []
 
@@ -11,20 +11,21 @@ export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
   // The only ones that should be left are any made when adding a new show to watch
   announcementTimouts.forEach(clearTimeout);
 
-  // Find all the unique shows we need to get the schedule for. This reduces network load 
-  const uniqueShows = new Set<number>();
-  (Object.values(data) as ServerConfig[]).forEach(c => {
-    c.watching.map(show => show.anilistId).forEach(id => uniqueShows.add(id));
-  });
-
   // Current time in ms + 24 hours worth of ms
   const endTime = Date.now() + (24 * 60 * 60 * 1000);
 
+  const uniqueIds = getUniqueMediaIds(Object.values(data));
+
   // Grab all the necessary announcements over the next 24 hours and schedule our own channel announcements
-  await scheduleAnnouncements(Array.from(uniqueShows), Object.values(data), Date.now(), endTime);
+  await scheduleAnnouncements(uniqueIds, Object.values(data), Date.now(), endTime);
 
   // Re-initialize the scheduler 1 minute before the end of the last tracked time window
   setTimeout(() => initScheduler(data), endTime - Date.now() - (60 * 1000));
+
+  if (SET_ACTIVITY) {
+    // Subsequent schedules will update the count
+    client.user?.setActivity({ type: "WATCHING", name: `${uniqueIds.length} airing anime` });
+  }
 }
 
 /**
@@ -95,7 +96,10 @@ export async function sendAnnouncement(serverConfigs: ServerConfig[], airing: Ai
         // If a server loses it's boost level, the thread archive time might be set too high
         try {
           if (watch.createThreads)
-            message.startThread(`${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`, watch.threadArchiveTime)
+            message.startThread({ 
+              name: `${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`,
+              autoArchiveDuration: watch.threadArchiveTime
+            });
         } catch (e) {
           console.log("Failed to create thread", e.message || e);
         }

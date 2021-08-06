@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { MediaFormat, MediaTitle, TitleFormat } from "./Model";
+import { MediaFormat, MediaTitle, ServerConfig, TitleFormat } from "./Model";
 
 export async function query(query: string, variables?: any) {
   return fetch("https://graphql.anilist.co", {
@@ -62,6 +62,14 @@ export function readableFormat(format: MediaFormat) {
     case "TV_SHORT": return "TV Short";
     default: return format;
   }
+}
+
+export function getUniqueMediaIds(configs: ServerConfig[]): number[] {
+  const uniqueShows = new Set<number>();
+  configs.forEach(c => {
+    c.watching.map(show => show.anilistId).forEach(id => uniqueShows.add(id));
+  });
+  return Array.from(uniqueShows);
 }
 
 export function parseTime(seconds: number) {

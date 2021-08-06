@@ -8,5 +8,6 @@ services:
       - /usr/app/node_modules
     environment:
       MODE: "${MODE}"
+      SET_ACTIVITY: "${SET_ACTIVITY}"
       BOT_TOKEN: "${BOT_TOKEN}"
       DEV_SERVER_ID: "${DEV_SERVER_ID}"

@@ -43,11 +43,11 @@ export default class CommandWatch extends Command {
   }
 
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>) {
-    const { value } = interaction.options.get("anime") as { value: string };
-    const { channel } = interaction.options.has("channel") ? interaction.options.get("channel") as { channel: GuildChannel } : { channel: interaction.channel };
-    const { value: createThreads } = interaction.options.has("create_threads") ? interaction.options.get("create_threads") as { value: boolean } : { value: false };
-    const { value: threadArchiveTime } = interaction.options.has("thread_archive") ? interaction.options.get("thread_archive") as { value: ThreadArchiveTime } : { value: ThreadArchiveTime.ONE_DAY };
-
+    const value = interaction.options.getString("anime");
+    const channel = interaction.options.getChannel("channel") || interaction.channel;
+    const createThreads = interaction.options.getBoolean("create_threads");
+    const threadArchiveTime: ThreadArchiveTime = interaction.options.getInteger("thread_archive");
+    
     switch(threadArchiveTime) {
       case ThreadArchiveTime.THREE_DAYS: {
         if (!interaction.guild.features.includes("THREE_DAY_THREAD_ARCHIVE")) {

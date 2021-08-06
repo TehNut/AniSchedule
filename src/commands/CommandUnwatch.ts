@@ -26,9 +26,8 @@ export default class CommandWatch extends Command {
   }
 
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>) {
-    // TODO check permission
-    const { value } = interaction.options.get("anime") as { value: string };
-    const { channel } = interaction.options.has("channel") ? interaction.options.get("channel") as { channel: GuildChannel } : { channel: interaction.channel };
+    const value = interaction.options.getString("anime");
+    const channel = interaction.options.getChannel("channel") || interaction.channel;
    
     const anilistId = await getMediaId(value as string);
     if (!anilistId) {

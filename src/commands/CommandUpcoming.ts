@@ -51,7 +51,7 @@ export default class CommandUpcoming extends Command {
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
     const serverConfig = this.getServerConfig(data, interaction.guildId);
     const startTime = Date.now();
-    let days = interaction.options.has("days") ? interaction.options.get("days").value as number : 1;
+    let days = interaction.options.getInteger("days") || 1;
     if (days > 7)
       days = 7;
 

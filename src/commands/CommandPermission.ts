@@ -40,10 +40,10 @@ export default class CommandPermission extends Command {
     }
 
     const serverConfig = this.getServerConfig(data, interaction.guildId);
-    const { value: permissionType } = interaction.options.get("type") as { value: PermissionType };
+    const permissionType: PermissionType = interaction.options.getString("type") as PermissionType;
 
     if (permissionType === "ROLE") {
-      if (!interaction.options.has("role")) {
+      if (!interaction.options.getRole("role")) {
         interaction.reply({
           content: "If you set the type as role, you must choose a role",
           ephemeral: true

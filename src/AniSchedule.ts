@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config();
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { ApplicationCommand, Client, CommandInteraction, Intents, MessageComponentInteraction, Snowflake } from "discord.js";
-import { BOT_TOKEN, DATA_PATH, DEV_SERVER_ID, MODE } from "./Constants";
+import { BOT_TOKEN, DATA_PATH, DEV_SERVER_ID, MODE, SET_ACTIVITY } from "./Constants";
 import { ServerConfig } from "./Model";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
@@ -14,6 +14,7 @@ import CommandAbout from "./commands/CommandAbout";
 import { initScheduler } from "./Scheduler";
 import CommandUpcoming from "./commands/CommandUpcoming";
 import CommandPermission from "./commands/CommandPermission";
+import { getUniqueMediaIds } from "./Util";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
@@ -62,13 +63,19 @@ client.on("ready", async () => {
         }
       ]
     });
-  })
+  });
+
+  if (SET_ACTIVITY) {
+    const uniqueIds = getUniqueMediaIds(Object.values(data));
+    // Set the initial activity count at launch
+    client.user.setActivity({ type: "WATCHING", name: `${uniqueIds.length} airing anime` });
+  }
 });
 
 client.on("interactionCreate", async interaction => {
   // For now, all interactions must be in a guild
-  if (!interaction.inGuild() && interaction.isCommand()) {
-    interaction.reply({
+  if (interaction.isCommand() && !interaction.inGuild()) {
+    (interaction as CommandInteraction).reply({
       content: `${client.user.username} does not allow commands to be used in direct messages at this moment.`
     });
     return;
