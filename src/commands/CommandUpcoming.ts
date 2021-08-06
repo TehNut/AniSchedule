@@ -49,7 +49,7 @@ export default class CommandUpcoming extends Command {
   }
 
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
-    const serverConfig = data[interaction.guildId] as ServerConfig;
+    const serverConfig = this.getServerConfig(data, interaction.guildId);
     const startTime = Date.now();
     let days = interaction.options.has("days") ? interaction.options.get("days").value as number : 1;
     if (days > 7)

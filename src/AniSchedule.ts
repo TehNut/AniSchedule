@@ -2,6 +2,7 @@ import { config } from "dotenv";
 config();
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { ApplicationCommand, Client, CommandInteraction, Intents, MessageComponentInteraction, Snowflake } from "discord.js";
+import { BOT_TOKEN, DATA_PATH, DEV_SERVER_ID, MODE } from "./Constants";
 import { ServerConfig } from "./Model";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
@@ -26,10 +27,10 @@ commands.push(new CommandPermission());
 const commandIds: Record<string, { id: Snowflake, command: ApplicationCommand }> = {};
 
 let data: Record<Snowflake, ServerConfig> = function() {
-  if (existsSync("./data.json"))
-    return JSON.parse(readFileSync("./data.json", "utf-8"));
+  if (existsSync(DATA_PATH))
+    return JSON.parse(readFileSync(DATA_PATH, "utf-8"));
 
-  writeFileSync("./data.json", "{}", { encoding: "utf-8" });
+  writeFileSync(DATA_PATH, "{}", { encoding: "utf-8" });
   return {};
 }();
 export const client = new Client({
@@ -38,12 +39,12 @@ export const client = new Client({
 
 async function init() {
   await initScheduler(data);
-  await client.login(process.env.BOT_TOKEN);
+  await client.login(BOT_TOKEN);
   console.log(`Logged in as ${client.user.username}#${client.user.discriminator}`);
 }
 
 client.on("ready", async () => {
-  const commandManager = process.env.MODE === "DEV" ? client.guilds.cache.get(process.env.DEV_SERVER_ID as Snowflake).commands : client.application.commands;
+  const commandManager = MODE === "DEV" ? client.guilds.cache.get(DEV_SERVER_ID as Snowflake).commands : client.application.commands;
   const response = await commandManager.set(commands.map(c => c.data));
   response.forEach((command, id) => commandIds[command.name] = { id, command });
 
@@ -91,7 +92,7 @@ async function handleCommands(interaction: CommandInteraction) {
     return;
   }
   if (await command.handleInteraction(client, interaction, data))
-    writeFileSync("./data.json", JSON.stringify(data, null, process.env.MODE === "DEV" ? 2 : 0));
+    writeFileSync(DATA_PATH, JSON.stringify(data, null, MODE === "DEV" ? 2 : 0));
 }
 
 async function handleMessageComponents(interaction: MessageComponentInteraction) {
@@ -102,7 +103,7 @@ async function handleMessageComponents(interaction: MessageComponentInteraction)
     // Strip the command name off the ID so it can be more useful to the command
     interaction.customId = idSplit[1];
     if (await command.handleMessageComponents(client, interaction, data))
-      writeFileSync("./data.json", JSON.stringify(data, null, process.env.MODE === "DEV" ? 2 : 0));
+      writeFileSync(DATA_PATH, JSON.stringify(data, null, MODE === "DEV" ? 2 : 0));
   }
 }
 

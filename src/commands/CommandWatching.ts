@@ -40,7 +40,7 @@ export default class CommandWatching extends Command {
 
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
     const { channel } = interaction.options.has("channel") ? interaction.options.get("channel") as { channel: GuildChannel } : { channel: interaction.channel };
-    const serverConfig = data[interaction.guildId] as ServerConfig;
+    const serverConfig = this.getServerConfig(data, interaction.guildId);
     const watching = serverConfig?.watching.filter(w => w.channelId === channel.id).map(w => w.anilistId);
     const watchingMedia = (await query(watchingQuery, { ids: watching })).data.Page.media as any[];
     let description = "";

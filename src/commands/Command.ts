@@ -13,6 +13,19 @@ export default abstract class Command {
   async handleMessageComponents(client: Client, componentInteraction: MessageComponentInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
     return false;
   }
+
+  getServerConfig(data: Record<Snowflake, ServerConfig>, serverId: Snowflake): ServerConfig {
+    let serverConfig: ServerConfig = data[serverId];
+    if (!serverConfig) {
+      serverConfig = data[serverId] = {
+        permission: "OWNER",
+        titleFormat: "ROMAJI",
+        watching: []
+      } as ServerConfig;
+    }
+
+    return serverConfig;
+  }
 }
 
 export const commands: Command[] = [];

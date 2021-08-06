@@ -39,7 +39,7 @@ export default class CommandPermission extends Command {
       return false;
     }
 
-    const serverConfig: ServerConfig = data[interaction.guildId];
+    const serverConfig = this.getServerConfig(data, interaction.guildId);
     const { value: permissionType } = interaction.options.get("type") as { value: PermissionType };
 
     if (permissionType === "ROLE") {

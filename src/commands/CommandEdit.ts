@@ -66,7 +66,8 @@ export default class CommandEdit extends Command {
       return false;
     }
 
-    const watchConfig = (data[interaction.guildId]?.watching as WatchConfig[]).find(w => w.anilistId === anilistId && w.channelId === channel.id);
+    const serverConfig = this.getServerConfig(data, interaction.guildId);
+    const watchConfig = serverConfig.watching.find(w => w.anilistId === anilistId && w.channelId === channel.id);
     if (!watchConfig) {
       interaction.reply({
         ephemeral: true,

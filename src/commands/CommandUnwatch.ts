@@ -47,15 +47,7 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    const serverConfig: ServerConfig = data[interaction.guildId];
-    if (!serverConfig) {
-      interaction.reply({
-        ephemeral: true,
-        content: `That anime isn't being watched in ${channel.toString()}.`
-      });
-      return false;
-    }
-
+    const serverConfig = this.getServerConfig(data, interaction.guildId);
     const watchConfig = serverConfig.watching.find(w => w.anilistId === anilistId && w.channelId === channel.id);
     if (!watchConfig) {
       interaction.reply({

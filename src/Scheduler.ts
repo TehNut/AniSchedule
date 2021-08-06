@@ -2,50 +2,8 @@ import { MessageEmbed, Snowflake, TextChannel } from "discord.js";
 import { AiringSchedule, ServerConfig, TitleFormat } from "./Model";
 import { getTitle, query, readableFormat } from "./Util";
 import { client } from "./AniSchedule";
+import { SCHEDULE_QUERY, STREAMING_SITES } from "./Constants";
 
-const scheduleQuery = `query($page: Int, $amount: Int = 50, $ids: [Int!]!, $nextDay: Int!, $dateStart: Int) {
-  Page(page: $page, perPage: $amount) {
-    pageInfo {
-      hasNextPage
-    }
-    airingSchedules(notYetAired: true, mediaId_in: $ids, sort: TIME, airingAt_greater: $dateStart, airingAt_lesser: $nextDay) {
-      media {
-        id
-        siteUrl
-        format
-        duration
-        episodes
-        title {
-          native
-          romaji
-          english
-        }
-        coverImage {
-          large
-          color
-        }
-        externalLinks {
-          site
-          url
-        }
-      }
-      id
-      episode
-      airingAt
-      timeUntilAiring
-    }
-  }
-}`;
-const streamingSites = [
-  "Amazon",
-  "AnimeLab",
-  "Crunchyroll",
-  "Funimation",
-  "Hidive",
-  "Hulu",
-  "Netflix",
-  "VRV",
-];
 const announcementTimouts: NodeJS.Timeout[] = []
 
 export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
@@ -99,8 +57,8 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
 
   const upcomingEpisodes: AiringSchedule[] = [];
 
-  async function fetchSchedule(page: number) {
-    const response = (await query(scheduleQuery, { 
+  async function fetchSchedule(page: number = 1) {
+    const response = (await query(SCHEDULE_QUERY, { 
       page: pageInfo ? pageInfo.page : page,
       amount: pageInfo ? pageInfo.perPage : undefined,
       ids: mediaIds,
@@ -114,7 +72,7 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
       await fetchSchedule(page + 1);
   }
 
-  await fetchSchedule(1);
+  await fetchSchedule();
   return upcomingEpisodes;
 }
 
@@ -134,15 +92,8 @@ export async function sendAnnouncement(serverConfigs: ServerConfig[], airing: Ai
           embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat) ],
         });
         console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
-        // TODO Remove this try/catch when threads launch
-        // Threads are not fully available yet. There is no future-proof way of determining of a server supports threads or not so until threads launch, we will just catch any errors so at least we don't crash.
-        try {
-          if (watch.createThreads) {
-            message.startThread(`${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`, watch.threadArchiveTime)
-          }
-        } catch (e) {
-          // no-op
-        }
+        if (watch.createThreads)
+          message.startThread(`${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`, watch.threadArchiveTime)
       }
     }
   }
@@ -167,7 +118,7 @@ export function createAnnouncementEmbed(airing: AiringSchedule, titleFormat: Tit
     ].filter(s => s.length > 0).join(" • "))
     .setThumbnail(airing.media.coverImage.large)
 
-  const allowedExternalLinks = airing.media.externalLinks.filter(l => streamingSites.includes(l.site));
+  const allowedExternalLinks = airing.media.externalLinks.filter(l => STREAMING_SITES.includes(l.site));
   if (allowedExternalLinks.length > 0) {
     embed.addField("Streams", allowedExternalLinks.map(l => `[${l.site}](${l.url})`).join(" | "));
     embed.addField("Notice", "It may take some time for this episode to appear on the above streaming service(s).");

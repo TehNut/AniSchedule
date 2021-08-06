@@ -29,15 +29,7 @@ export default class CommandConfig extends Command {
     // TODO Check permission
     const { value: format } = interaction.options.get("format") as { value: string };
      
-    let serverConfig: ServerConfig = data[interaction.guildId];
-    if (!serverConfig) {
-      serverConfig = data[interaction.guildId] = {
-        permission: "OWNER",
-        titleFormat: "ROMAJI",
-        watching: []
-      } as ServerConfig;
-    }
-
+    const serverConfig = this.getServerConfig(data, interaction.guildId);
     serverConfig.titleFormat = format.toUpperCase() as "NATIVE" | "ROMAJI" | "ENGLISH";
     interaction.reply({
       ephemeral: true,

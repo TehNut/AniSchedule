@@ -57,12 +57,10 @@ export function getTitle(title: MediaTitle, wanted: TitleFormat) {
 
 export function readableFormat(format: MediaFormat) {
   switch(format) {
-    case "ONA":
-    case "OVA":
-    case "TV": return format;
     case "MOVIE": return "Movie";
     case "SPECIAL": return "Special";
-    case "TV_SHORT": "TV Short";
+    case "TV_SHORT": return "TV Short";
+    default: return format;
   }
 }
 
@@ -97,10 +95,3 @@ export function formatTime(seconds: number, appendSeconds?: boolean) {
 
   return ret;
 }
-
-export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
-  const chunked: T[][] = [];
-  for (let i = 0; i < array.length; i += chunkSize)
-    chunked.push(array.slice(i, i + chunkSize));
-  return chunked;
-};

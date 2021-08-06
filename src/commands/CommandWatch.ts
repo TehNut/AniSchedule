@@ -65,15 +65,7 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    let serverConfig: ServerConfig = data[interaction.guildId];
-    if (!serverConfig) {
-      serverConfig = data[interaction.guildId] = {
-        permission: "OWNER",
-        titleFormat: "ROMAJI",
-        watching: []
-      } as ServerConfig;
-    }
-
+    const serverConfig = this.getServerConfig(data, interaction.guildId);
     if (serverConfig.watching.find(w => w.anilistId === anilistId && w.channelId === channel.id)) {
       interaction.reply({
         ephemeral: true,
