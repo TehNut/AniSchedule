@@ -42,29 +42,34 @@ export default class CommandWatching extends Command {
     const channel = interaction.options.getChannel("channel") || interaction.channel;
     const serverConfig = this.getServerConfig(data, interaction.guildId);
     const watching = serverConfig?.watching.filter(w => w.channelId === channel.id).map(w => w.anilistId);
-    const watchingMedia = (await query(watchingQuery, { ids: watching })).data.Page.media as any[];
     let description = "";
     const otherChannel = channel.id !== interaction.channelId;
-    watchingMedia.filter(m => m.status !== "FINISHED" && m.status !== "CANCELLED").forEach(m => {
+    
+    let watchingMedia = (await query(watchingQuery, { ids: watching })).data.Page.media as any[];
+    watchingMedia = watchingMedia
+      .filter(m => m.status !== "FINISHED" && m.status !== "CANCELLED")
+      .sort((m1, m2) => m1.nextAiringEpisode.timeUntilAiring - m2.nextAiringEpisode.timeUntilAiring);
+
+    for (const m of watchingMedia) {
       const nextLine = `\n• [${getTitle(m.title, serverConfig.titleFormat)}](${m.siteUrl})${m.nextAiringEpisode ? ` (~${formatTime(m.nextAiringEpisode.timeUntilAiring)})` : ''}`;
       if (1000 - description.length < nextLine.length) {
         if (interaction.replied)
-          interaction.followUp({ embeds: createEmbed(description), ephemeral: otherChannel });
+          await interaction.followUp({ embeds: createEmbed(description), ephemeral: otherChannel });
         else
-          interaction.reply({ embeds: createEmbed(description), ephemeral: otherChannel });
+          await interaction.reply({ embeds: createEmbed(description), ephemeral: otherChannel });
         description = "";
       }
 
       description += nextLine;
-    });
+    }
 
     if (description.length > 0) {
       if (interaction.replied)
-        interaction.followUp({ embeds: createEmbed(description), ephemeral: otherChannel });
+        await interaction.followUp({ embeds: createEmbed(description), ephemeral: otherChannel });
       else
-        interaction.reply({ embeds: createEmbed(description), ephemeral: otherChannel });
+        await interaction.reply({ embeds: createEmbed(description), ephemeral: otherChannel });
     } else if (!interaction.replied) {
-      interaction.reply({ content: "No currently airing or upcoming shows are being announced.", ephemeral: otherChannel });
+      await interaction.reply({ content: "No currently airing or upcoming shows are being announced.", ephemeral: otherChannel });
     }
 
     return false;
