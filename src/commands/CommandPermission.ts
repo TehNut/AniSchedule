@@ -73,7 +73,7 @@ export default class CommandPermission extends Command {
           id: serverConfig.permissionRoleId,
           permission: true
         };
-        response = `any member of the ${interaction.options.get("role").role} role`;
+        response = `any member of the ${interaction.options.getRole("role").toString()} role`;
         break;
       }
       case "OWNER": {
@@ -87,23 +87,33 @@ export default class CommandPermission extends Command {
       }
     }
 
+    const ownerPermission: ApplicationCommandPermissionData = { 
+      type: "USER", 
+      id: interaction.guild.ownerId, 
+      permission: true 
+    };
+
     await interaction.guild.commands.permissions.set({
       fullPermissions: [
         {
+          id: getCommand("permission").id,
+          permissions: [ ownerPermission ]
+        },
+        {
           id: getCommand("watch").id,
-          permissions: [ permission ]
+          permissions: [ permission, ownerPermission ]
         },
         {
           id: getCommand("unwatch").id,
-          permissions: [ permission ]
+          permissions: [ permission, ownerPermission ]
         },
         {
           id: getCommand("title").id,
-          permissions: [ permission ]
+          permissions: [ permission, ownerPermission ]
         },
         {
           id: getCommand("edit").id,
-          permissions: [ permission ]
+          permissions: [ permission, ownerPermission ]
         }
       ]
     });
