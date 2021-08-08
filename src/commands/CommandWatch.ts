@@ -23,6 +23,11 @@ export default class CommandWatch extends Command {
           type: "CHANNEL"
         },
         {
+          name: "ping_role",
+          description: "A role to ping when the announcement is made.",
+          type: "ROLE"
+        },
+        {
           name: "create_threads",
           description: "Should discussion threads be created for each episode. Defaults to false.",
           type: "BOOLEAN"
@@ -45,6 +50,7 @@ export default class CommandWatch extends Command {
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>) {
     const value = interaction.options.getString("anime");
     const channel = interaction.options.getChannel("channel") || interaction.channel;
+    const role = interaction.options.getRole("ping_role");
     const createThreads = interaction.options.getBoolean("create_threads");
     const threadArchiveTime: ThreadArchiveTime = interaction.options.getInteger("thread_archive");
     
@@ -107,6 +113,7 @@ export default class CommandWatch extends Command {
     serverConfig.watching.push({
       anilistId,
       channelId: channel.id,
+      pingRole: role ? role.id : null,
       createThreads,
       threadArchiveTime
     });

@@ -89,7 +89,9 @@ export async function sendAnnouncement(serverConfigs: ServerConfig[], airing: Ai
     for (const watch of watchConfigs) {
       const channel = client.channels.cache.get(watch.channelId) as TextChannel;     
       if (channel) {
+        const roleMention = watch.pingRole ? await channel.guild.roles.fetch(watch.pingRole) : null;
         const message = await channel.send({
+          content: roleMention ? `<@&${roleMention.id}>` : undefined,
           embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat) ],
         });
         console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);

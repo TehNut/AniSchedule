@@ -17,6 +17,7 @@ export type ServerConfig = {
 export type WatchConfig = {
   channelId: Snowflake;
   anilistId: number;
+  pingRole?: Snowflake;
   createThreads: boolean;
   threadArchiveTime: ThreadArchiveTime;
 }

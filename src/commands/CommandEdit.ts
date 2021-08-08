@@ -21,6 +21,16 @@ export default class CommandEdit extends Command {
           name: "channel",
           description: "The channel the announcement is being made in. Defaults to current channel",
           type: "CHANNEL"
+        }, 
+        {
+          name: "mention_role",
+          description: "A role to mention when the announcement is made.",
+          type: "ROLE"
+        },
+        {
+          name: "remove_mention",
+          description: "Removes a previously set role mention.",
+          type: "BOOLEAN"
         },
         {
           name: "create_threads",
@@ -45,6 +55,8 @@ export default class CommandEdit extends Command {
   async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
     const value = interaction.options.getString("anime");
     const channel = interaction.options.getChannel("channel") || interaction.channel;
+    const role = interaction.options.getRole("mention_role");
+    const removePing = interaction.options.getRole("remove_mention");
     const createThreads = interaction.options.getBoolean("create_threads");
     const threadArchiveTime: ThreadArchiveTime = interaction.options.getInteger("thread_archive");
 
@@ -94,6 +106,12 @@ export default class CommandEdit extends Command {
       });
       return false;
     }
+
+    if (role)
+      watchConfig.pingRole = role.id;
+
+    if (removePing)
+      watchConfig.pingRole = null;
 
     if (createThreads !== null)
       watchConfig.createThreads = createThreads;
