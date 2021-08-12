@@ -58,3 +58,8 @@ export type AiringSchedule = {
   airingAt: number;
   timeUntilAiring: number;
 }
+
+export type StreamSite = {
+  name: string;
+  icon: string;
+}

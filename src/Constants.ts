@@ -1,3 +1,5 @@
+import { StreamSite } from "./Model";
+
 export const BOT_TOKEN = process.env.BOT_TOKEN;
 export const MODE = process.env.MODE;
 export const DEV_SERVER_ID = process.env.DEV_SERVER_ID;
@@ -36,13 +38,15 @@ export const SCHEDULE_QUERY = `query($page: Int, $amount: Int = 50, $ids: [Int!]
     }
   }
 }`;
-export const STREAMING_SITES = [
-  "Amazon",
-  "AnimeLab",
-  "Crunchyroll",
-  "Funimation",
-  "Hidive",
-  "Hulu",
-  "Netflix",
-  "VRV"
+
+const iconIds = process.env.STREAM_SITE_ICONS ? process.env.STREAM_SITE_ICONS.split(",") : new Array(8).fill(null);
+export const STREAMING_SITES: StreamSite[] = [
+  { name: "Amazon", icon: iconIds[0] }, 
+  { name: "AnimeLab", icon: iconIds[1] }, 
+  { name: "Crunchyroll", icon: iconIds[2] }, 
+  { name: "Funimation", icon: iconIds[3] },
+  { name: "Hidive", icon: iconIds[4] }, 
+  { name: "Hulu", icon: iconIds[5] }, 
+  { name: "Netflix", icon: iconIds[6] }, 
+  { name: "VRV", icon: iconIds[7] }
 ];

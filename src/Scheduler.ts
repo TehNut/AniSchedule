@@ -129,9 +129,12 @@ export function createAnnouncementEmbed(airing: AiringSchedule, titleFormat: Tit
     ].filter(s => s.length > 0).join(" • "))
     .setThumbnail(airing.media.coverImage.large)
 
-  const allowedExternalLinks = airing.media.externalLinks.filter(l => STREAMING_SITES.includes(l.site));
+  const allowedExternalLinks = airing.media.externalLinks.filter(l => STREAMING_SITES.find(s => s.name === l.site));
   if (allowedExternalLinks.length > 0) {
-    embed.addField("Streams", allowedExternalLinks.map(l => `[${l.site}](${l.url})`).join(" | "));
+    embed.addField("Streams", allowedExternalLinks.map(l => {
+      const streamSite = STREAMING_SITES.find(s => s.name === l.site);
+      return `${streamSite.icon ? streamSite.icon : ""} [${l.site}](${l.url})`
+    }).join(" | "));
     embed.addField("Notice", "It may take some time for this episode to appear on the above streaming service(s).");
   } else
     embed.addField("Streams", "No licensed streaming links available");

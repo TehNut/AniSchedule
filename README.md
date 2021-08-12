@@ -30,22 +30,31 @@ npm run build
 
 Create a new `.env` file in the root directory of the project (the same directory as this README) with the following properties:
 
-```
-BOT_TOKEN=$TOKEN
-SET_ACTIVITY=$SET_ACTIVITY
-MODE=$MODE
-DEV_SERVER_ID=$DEV_SERVER_ID
-```
-
-| Variable Name  | Description |
+| Variable Name  | Type | Required | Description |
 |----------------| ----------- |
-| $TOKEN | The token for your bot which you can get from [Discord's developer panel](https://discordapp.com/developers/) |
-| $SET_ACTIVITY | Sets bot activity to the number of unique shows it is handling announcements for across all servers |
-| $MODE | If set to `DEV`, commands will be registered to a guild instead of globally. Guild-registered commands are updated instantly, while globally registered commands take up to an hour to sync. Any other value will register commands globally as normal. |
-| $DEV_SERVER_ID | The server ID to register commands to when `MODE` is set to `DEV`. |
+| $TOKEN | `String` | Yes | The token for your bot which you can get from [Discord's developer panel](https://discordapp.com/developers/) |
+| $SET_ACTIVITY | `boolean` | No | Sets bot activity to the number of unique shows it is handling announcements for across all servers |
+| $MODE | `DEV` or `any` | No | If set to `DEV`, commands will be registered to a guild instead of globally. Guild-registered commands are updated instantly, while globally registered commands take up to an hour to sync. Any other value will register commands globally as normal. |
+| $DEV_SERVER_ID | `number` | No | The server ID to register commands to when `MODE` is set to `DEV`. |
+| $STREAM_SITE_ICONS | `String` | No | A comma separated list of emoji IDs. See [here](#stream-site-icons) for more. |
 
 Finally, run `npm run dev` to start the bot.
 
 ### Docker
 
 Create the `.env` file as you would above and run `docker-compose up`. 
+
+### Stream Site Icons
+
+This allows for icons to be displayed next to the site name in the notification embed. 
+
+An example entry in the list would be `<:amazon:875166861958991912>`. To get this value, send a message with the emoji you want to use, but put a `\` in front of it. The sent message will display the string necessary. The order in which these should be listed is as follows:
+
+1. Amazon
+2. AnimeLab
+3. Crunchyroll
+4. Funimation
+5. HiDive
+6. Hulu
+7. Netflix
+8. VRV
