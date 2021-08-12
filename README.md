@@ -31,7 +31,7 @@ npm run build
 Create a new `.env` file in the root directory of the project (the same directory as this README) with the following properties:
 
 | Variable Name  | Type | Required | Description |
-|----------------| ----------- |
+|----------------| ---- | -------- | ----------- |
 | $TOKEN | `String` | Yes | The token for your bot which you can get from [Discord's developer panel](https://discordapp.com/developers/) |
 | $SET_ACTIVITY | `boolean` | No | Sets bot activity to the number of unique shows it is handling announcements for across all servers |
 | $MODE | `DEV` or `any` | No | If set to `DEV`, commands will be registered to a guild instead of globally. Guild-registered commands are updated instantly, while globally registered commands take up to an hour to sync. Any other value will register commands globally as normal. |
