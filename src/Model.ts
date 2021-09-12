@@ -62,4 +62,5 @@ export type AiringSchedule = {
 export type StreamSite = {
   name: string;
   icon: string;
+  filter?: (externalLink: { site: string, url: string }) => boolean
 }

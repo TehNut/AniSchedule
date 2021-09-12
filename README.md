@@ -58,3 +58,4 @@ An example entry in the list would be `<:amazon:875166861958991912>`. To get thi
 6. Hulu
 7. Netflix
 8. VRV
+9. YouTube

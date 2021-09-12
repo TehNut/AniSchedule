@@ -129,7 +129,10 @@ export function createAnnouncementEmbed(airing: AiringSchedule, titleFormat: Tit
     ].filter(s => s.length > 0).join(" • "))
     .setThumbnail(airing.media.coverImage.large)
 
-  const allowedExternalLinks = airing.media.externalLinks.filter(l => STREAMING_SITES.find(s => s.name === l.site));
+  const allowedExternalLinks = airing.media.externalLinks.filter(l => {
+    const streamingsite = STREAMING_SITES.find(s => s.name === l.site);
+    return streamingsite && (!streamingsite.filter || streamingsite.filter(l));
+  });
   if (allowedExternalLinks.length > 0) {
     embed.addField("Streams", allowedExternalLinks.map(l => {
       const streamSite = STREAMING_SITES.find(s => s.name === l.site);
