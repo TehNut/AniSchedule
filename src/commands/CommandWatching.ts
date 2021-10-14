@@ -48,7 +48,7 @@ export default class CommandWatching extends Command {
     let watchingMedia = (await query(watchingQuery, { ids: watching })).data.Page.media as any[];
     watchingMedia = watchingMedia
       .filter(m => m.status !== "FINISHED" && m.status !== "CANCELLED")
-      .sort((m1, m2) => m1.nextAiringEpisode.timeUntilAiring - m2.nextAiringEpisode.timeUntilAiring);
+      .sort((m1, m2) => m1.nextAiringEpisode?.timeUntilAiring - m2.nextAiringEpisode?.timeUntilAiring);
 
     for (const m of watchingMedia) {
       const nextLine = `\n• [${getTitle(m.title, serverConfig.titleFormat)}](${m.siteUrl})${m.nextAiringEpisode ? ` (~${formatTime(m.nextAiringEpisode.timeUntilAiring)})` : ''}`;
