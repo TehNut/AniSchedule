@@ -4,7 +4,7 @@ import { getTitle, getUniqueMediaIds, query, readableFormat } from "./Util";
 import { client } from "./AniSchedule";
 import { SCHEDULE_QUERY, SET_ACTIVITY, STREAMING_SITES } from "./Constants";
 
-const announcementTimouts: NodeJS.Timeout[] = []
+const announcementTimouts: NodeJS.Timeout[] = [];
 
 export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
   // Clear any remaining announcements since we're about to remake them all
@@ -85,9 +85,9 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
  */
 export async function sendAnnouncement(serverConfigs: ServerConfig[], airing: AiringSchedule) {
   for (const serverConfig of serverConfigs) {
-    let watchConfigs = serverConfig.watching.filter(w => w.anilistId === airing.media.id); 
+    const watchConfigs = serverConfig.watching.filter(w => w.anilistId === airing.media.id); 
     for (const watch of watchConfigs) {
-      const channel = client.channels.cache.get(watch.channelId) as TextChannel;     
+      const channel = await client.channels.fetch(watch.channelId) as TextChannel;     
       if (channel) {
         const roleMention = watch.pingRole ? await channel.guild.roles.fetch(watch.pingRole) : null;
         const message = await channel.send({
