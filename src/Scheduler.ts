@@ -1,12 +1,13 @@
-import { MessageEmbed, Snowflake, TextChannel } from "discord.js";
-import { AiringSchedule, ServerConfig, TitleFormat } from "./Model";
+import { MessageEmbed, TextChannel } from "discord.js";
+import { AiringSchedule, ThreadArchiveTime, TitleFormat } from "./Model";
 import { getTitle, getUniqueMediaIds, query, readableFormat } from "./Util";
 import { client } from "./AniSchedule";
 import { SCHEDULE_QUERY, SET_ACTIVITY, STREAMING_SITES } from "./Constants";
+import { PrismaClient } from "@prisma/client";
 
 const announcementTimouts: NodeJS.Timeout[] = [];
 
-export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
+export async function initScheduler(prisma: PrismaClient) {
   // Clear any remaining announcements since we're about to remake them all
   // The only ones that should be left are any made when adding a new show to watch
   announcementTimouts.forEach(clearTimeout);
@@ -14,13 +15,13 @@ export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
   // Current time in ms + 24 hours worth of ms
   const endTime = Date.now() + (24 * 60 * 60 * 1000);
 
-  const uniqueIds = getUniqueMediaIds(Object.values(data));
+  const uniqueIds = await getUniqueMediaIds(prisma);
 
   // Grab all the necessary announcements over the next 24 hours and schedule our own channel announcements
-  await scheduleAnnouncements(uniqueIds, Object.values(data), Date.now(), endTime);
+  await scheduleAnnouncements(uniqueIds, prisma, Date.now(), endTime);
 
   // Re-initialize the scheduler 1 minute before the end of the last tracked time window
-  setTimeout(() => initScheduler(data), endTime - Date.now() - (60 * 1000));
+  setTimeout(() => initScheduler(prisma), endTime - Date.now() - (60 * 1000));
 
   if (SET_ACTIVITY) {
     // Subsequent schedules will update the count
@@ -36,11 +37,11 @@ export async function initScheduler(data: Record<Snowflake, ServerConfig>) {
  * @param startTime The start of the time window in ms
  * @param endTime The end of the time window in ms
  */
-export async function scheduleAnnouncements(mediaIds: number[], serverConfigs: ServerConfig[], startTime: number = Date.now(), endTime: number = Date.now() + (24 * 60 * 60 * 1000)) {
+export async function scheduleAnnouncements(mediaIds: number[], prisma: PrismaClient, startTime: number = Date.now(), endTime: number = Date.now() + (24 * 60 * 60 * 1000)) {
   const upcomingEpisodes = await getUpcomingEpisodes(mediaIds, startTime, endTime);
   upcomingEpisodes.forEach(e => {
     console.log(`Scheduled announcement for ${e.media.title.romaji} at ${new Date(e.airingAt * 1000)}`);
-    const timeout = setTimeout(() => sendAnnouncement(serverConfigs, e), e.timeUntilAiring * 1000);
+    const timeout = setTimeout(() => sendAnnouncement(prisma, e), e.timeUntilAiring * 1000);
     announcementTimouts.push(timeout);
   });
 }
@@ -83,25 +84,36 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
  * @param serverConfigs An array of all the server configs
  * @param airing The airing schedule to announce
  */
-export async function sendAnnouncement(serverConfigs: ServerConfig[], airing: AiringSchedule) {
-  for (const serverConfig of serverConfigs) {
-    const watchConfigs = serverConfig.watching.filter(w => w.anilistId === airing.media.id); 
-    for (const watch of watchConfigs) {
-      const channel = await client.channels.fetch(watch.channelId) as TextChannel;     
-      if (channel) {
-        const roleMention = watch.pingRole ? await channel.guild.roles.fetch(watch.pingRole) : null;
+export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSchedule) {
+  const announcements = await prisma.watchConfig.findMany({
+    where: {
+      anilistId: airing.id
+    },
+    distinct: [ "channelId", "anilistId" ]
+  });
+  for (const announcement of announcements) {
+    const channel = await client.channels.fetch(announcement.channelId) as TextChannel;
+    if (channel) {
+      const serverConfig = await prisma.serverConfig.findFirst({
+        rejectOnNotFound: true,
+        where: {
+          serverId: channel.guildId
+        }
+      });
+      if (serverConfig) {
+        const roleMention = announcement.pingRole ? await channel.guild.roles.fetch(announcement.pingRole) : null;
         const message = await channel.send({
           content: roleMention ? `<@&${roleMention.id}>` : undefined,
-          embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat) ],
+          embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat as TitleFormat) ]
         });
         console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
-        // If a server loses it's boost level, the thread archive time might be set too high
         try {
-          if (watch.createThreads)
-            message.startThread({ 
-              name: `${getTitle(airing.media.title, serverConfig.titleFormat)} Episode ${airing.episode} Discussion`,
-              autoArchiveDuration: watch.threadArchiveTime
+          if (announcement.createThreads) {
+            message.startThread({
+              name: `${getTitle(airing.media.title, serverConfig.titleFormat as TitleFormat)} Episode ${airing.episode} Discussion`,
+              autoArchiveDuration: announcement.threadArchiveTime as ThreadArchiveTime
             });
+          }
         } catch (e) {
           console.log("Failed to create thread", e.message || e);
         }

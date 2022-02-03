@@ -1,5 +1,6 @@
-import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
-import { ServerConfig, ThreadArchiveTime } from "../Model";
+import { PrismaClient } from "@prisma/client";
+import { Client, CommandInteraction } from "discord.js";
+import { ThreadArchiveTime } from "../Model";
 import { getMediaId } from "../Util";
 import Command from "./Command";
 
@@ -52,7 +53,7 @@ export default class CommandEdit extends Command {
     });
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
+  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
     const value = interaction.options.getString("anime");
     const channel = interaction.options.getChannel("channel") || interaction.channel;
     const role = interaction.options.getRole("mention_role");
@@ -97,8 +98,13 @@ export default class CommandEdit extends Command {
       return false;
     }
 
-    const serverConfig = this.getServerConfig(data, interaction.guildId);
-    const watchConfig = serverConfig.watching.find(w => w.anilistId === anilistId && w.channelId === channel.id);
+    const watchConfig = await prisma.watchConfig.findFirst({
+      where: {
+        anilistId,
+        channelId: channel.id
+      }
+    });
+
     if (!watchConfig) {
       interaction.reply({
         ephemeral: true,
@@ -118,6 +124,16 @@ export default class CommandEdit extends Command {
     
     if (threadArchiveTime !== null)
       watchConfig.threadArchiveTime = threadArchiveTime;
+
+    await prisma.watchConfig.update({
+      where: {
+        channelId_anilistId: {
+          anilistId: watchConfig.anilistId,
+          channelId: watchConfig.channelId
+        }
+      },
+      data: watchConfig
+    });
       
     interaction.reply({
       ephemeral: true,

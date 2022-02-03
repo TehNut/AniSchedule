@@ -1,6 +1,7 @@
-import { ApplicationCommandPermissionData, Client, CommandInteraction, Snowflake } from "discord.js";
+import { PrismaClient } from "@prisma/client";
+import { ApplicationCommandPermissionData, Client, CommandInteraction } from "discord.js";
 import { getCommand } from "../AniSchedule";
-import { PermissionType, ServerConfig } from "../Model";
+import { PermissionType } from "../Model";
 import Command from "./Command";
 
 export default class CommandPermission extends Command {
@@ -30,7 +31,7 @@ export default class CommandPermission extends Command {
     });
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
+  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
     if (interaction.user.id !== interaction.guild.ownerId) {
       interaction.reply({
         content: "Only the server owner can use this command.",
@@ -39,7 +40,7 @@ export default class CommandPermission extends Command {
       return false;
     }
 
-    const serverConfig = this.getServerConfig(data, interaction.guildId);
+    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
     const permissionType: PermissionType = interaction.options.getString("type") as PermissionType;
 
     if (permissionType === "ROLE") {
@@ -118,7 +119,17 @@ export default class CommandPermission extends Command {
       ]
     });
 
-    interaction.reply({
+    await prisma.serverConfig.update({
+      where: {
+        id: serverConfig.id
+      },
+      data: {
+        permission: serverConfig.permission,
+        permissionRoleId: serverConfig.permissionRoleId
+      }
+    });
+
+    await interaction.reply({
       content: `From now on, ${response} can use edit commands.`,
       ephemeral: true
     });

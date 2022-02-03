@@ -1,5 +1,6 @@
-import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
-import { ServerConfig } from "../Model";
+import { PrismaClient } from "@prisma/client";
+import { Client, CommandInteraction } from "discord.js";
+import { TitleFormat } from "../Model";
 import { formatTime, getTitle, query } from "../Util";
 import Command from "./Command";
 
@@ -38,10 +39,14 @@ export default class CommandWatching extends Command {
     })
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
+  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
     const channel = interaction.options.getChannel("channel") || interaction.channel;
-    const serverConfig = this.getServerConfig(data, interaction.guildId);
-    const watching = serverConfig?.watching.filter(w => w.channelId === channel.id).map(w => w.anilistId);
+    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
+    const watching = (await prisma.watchConfig.findMany({
+      where: {
+        channelId: channel.id
+      }
+    })).map(r => r.anilistId);
     let description = "";
     const otherChannel = channel.id !== interaction.channelId;
     
@@ -51,7 +56,7 @@ export default class CommandWatching extends Command {
       .sort((m1, m2) => m1.nextAiringEpisode?.timeUntilAiring - m2.nextAiringEpisode?.timeUntilAiring);
 
     for (const m of watchingMedia) {
-      const nextLine = `\n• [${getTitle(m.title, serverConfig.titleFormat)}](${m.siteUrl})${m.nextAiringEpisode ? ` (~${formatTime(m.nextAiringEpisode.timeUntilAiring)})` : ''}`;
+      const nextLine = `\n• [${getTitle(m.title, serverConfig.titleFormat as TitleFormat)}](${m.siteUrl})${m.nextAiringEpisode ? ` (~${formatTime(m.nextAiringEpisode.timeUntilAiring)})` : ''}`;
       if (1000 - description.length < nextLine.length) {
         if (interaction.replied)
           await interaction.followUp({ embeds: createEmbed(description), ephemeral: otherChannel });

@@ -1,5 +1,7 @@
 .env
 data.json
+data.json.old
+data.db
 /node_modules/
 /.idea
 /dist

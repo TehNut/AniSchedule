@@ -1,5 +1,6 @@
-import { Client, CommandInteraction, Snowflake } from "discord.js";
-import { ServerConfig } from "../Model";
+import { PrismaClient } from "@prisma/client";
+import { Client, CommandInteraction } from "discord.js";
+import { TitleFormat } from "../Model";
 import Command from "./Command";
 
 export default class CommandConfig extends Command {
@@ -25,12 +26,21 @@ export default class CommandConfig extends Command {
     }); 
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>): Promise<boolean> {
+  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
     // TODO Check permission
     const { value: format } = interaction.options.get("format") as { value: string };
-     
-    const serverConfig = this.getServerConfig(data, interaction.guildId);
-    serverConfig.titleFormat = format.toUpperCase() as "NATIVE" | "ROMAJI" | "ENGLISH";
+    
+    // Intializes if it's not already
+    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
+    await prisma.serverConfig.update({
+      where: {
+        id: serverConfig.id
+      },
+      data: {
+        titleFormat: format.toUpperCase() as TitleFormat
+      }
+    });
+    
     interaction.reply({
       ephemeral: true,
       content: `From now on, media titles will use the ${format} format`

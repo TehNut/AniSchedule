@@ -1,8 +1,8 @@
 import { Client, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
-import { ServerConfig } from "../Model";
 import Command from "./Command";
 import { version } from "../../package.json";
 import { formatTime } from "../Util";
+import { PrismaClient } from "@prisma/client";
 
 const startedAt = Math.floor(Date.now() / 1000);
 
@@ -15,7 +15,7 @@ export default class CommandAbout extends Command {
     });
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<`${bigint}`, ServerConfig>): Promise<boolean> {
+  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
     interaction.reply({
       ephemeral: true,
       embeds: [ 

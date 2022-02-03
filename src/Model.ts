@@ -7,19 +7,18 @@ export enum ThreadArchiveTime {
   SEVEN_DAYS = 10080
 }
 
-export type ServerConfig = {
+// TODO Remove later. Only used for data.json conversion
+export type ServerConfigLegacy = {
   permission: PermissionType;
   permissionRoleId: Snowflake;
   titleFormat: TitleFormat;
-  watching: WatchConfig[];
-}
-
-export type WatchConfig = {
-  channelId: Snowflake;
-  anilistId: number;
-  pingRole?: Snowflake;
-  createThreads: boolean;
-  threadArchiveTime: ThreadArchiveTime;
+  watching: Array<{
+    channelId: Snowflake;
+    anilistId: number;
+    pingRole?: Snowflake;
+    createThreads: boolean;
+    threadArchiveTime: ThreadArchiveTime;
+  }>;
 }
 
 export type PermissionType = "ANY" | "ROLE" | "OWNER";

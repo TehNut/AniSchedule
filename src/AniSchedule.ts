@@ -1,9 +1,7 @@
 import { config } from "dotenv";
 config();
-import { readFileSync, writeFileSync, existsSync } from "fs";
 import { ApplicationCommand, Client, CommandInteraction, Intents, MessageComponentInteraction, Snowflake } from "discord.js";
-import { BOT_TOKEN, DATA_PATH, DEV_SERVER_ID, MODE, SET_ACTIVITY } from "./Constants";
-import { ServerConfig } from "./Model";
+import { BOT_TOKEN, DEV_SERVER_ID, MODE, SET_ACTIVITY } from "./Constants";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
 import CommandUnwatch from "./commands/CommandUnwatch";
@@ -14,7 +12,8 @@ import CommandAbout from "./commands/CommandAbout";
 import { initScheduler } from "./Scheduler";
 import CommandUpcoming from "./commands/CommandUpcoming";
 import CommandPermission from "./commands/CommandPermission";
-import { getUniqueMediaIds } from "./Util";
+import { convertDataJson, getUniqueMediaIds } from "./Util";
+import { PrismaClient } from "@prisma/client";
 
 commands.push(new CommandWatch());
 commands.push(new CommandUnwatch());
@@ -26,20 +25,14 @@ commands.push(new CommandUpcoming());
 commands.push(new CommandPermission());
 
 const commandIds: Record<string, { id: Snowflake, command: ApplicationCommand }> = {};
-
-let data: Record<Snowflake, ServerConfig> = function() {
-  if (existsSync(DATA_PATH))
-    return JSON.parse(readFileSync(DATA_PATH, "utf-8"));
-
-  writeFileSync(DATA_PATH, "{}", { encoding: "utf-8" });
-  return {};
-}();
+const prisma = new PrismaClient();
 export const client = new Client({
   intents: [ Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES ]
 });
 
 async function init() {
-  await initScheduler(data);
+  await convertDataJson(prisma); // TODO remove
+  await initScheduler(prisma);
   await client.login(BOT_TOKEN);
   console.log(`Logged in as ${client.user.username}#${client.user.discriminator}`);
 }
@@ -66,11 +59,26 @@ client.on("ready", async () => {
   });
 
   if (SET_ACTIVITY) {
-    const uniqueIds = getUniqueMediaIds(Object.values(data));
-    // Set the initial activity count at launch
-    client.user.setActivity({ type: "WATCHING", name: `${uniqueIds.length} airing anime` });
+    getUniqueMediaIds(prisma).then(uniqueIds => {
+      // Set the initial activity count at launch
+      client.user.setActivity({ type: "WATCHING", name: `${uniqueIds.length} airing anime` });
+    });
   }
 });
+
+client.on("error", e => {
+  console.log("Error occurred", e);
+
+  // Make sure we stay logged in if we disconnect
+  client.login(BOT_TOKEN)
+});
+
+process.on("unhandledRejection", e => {
+  console.log("Error occurred", e);
+  
+  // Make sure we stay logged in if we disconnect
+  client.login(BOT_TOKEN);
+})
 
 client.on("interactionCreate", async interaction => {
   // For now, all interactions must be in a guild
@@ -98,8 +106,8 @@ async function handleCommands(interaction: CommandInteraction) {
     console.error(`Discord has passed unknown command "${interaction.commandName}" to us.`);
     return;
   }
-  if (await command.handleInteraction(client, interaction, data))
-    writeFileSync(DATA_PATH, JSON.stringify(data, null, MODE === "DEV" ? 2 : 0));
+
+  await command.handleInteraction(client, interaction, prisma)
 }
 
 async function handleMessageComponents(interaction: MessageComponentInteraction) {
@@ -109,8 +117,7 @@ async function handleMessageComponents(interaction: MessageComponentInteraction)
   if (command) {
     // Strip the command name off the ID so it can be more useful to the command
     interaction.customId = idSplit[1];
-    if (await command.handleMessageComponents(client, interaction, data))
-      writeFileSync(DATA_PATH, JSON.stringify(data, null, MODE === "DEV" ? 2 : 0));
+    await command.handleMessageComponents(client, interaction, prisma)
   }
 }
 

@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data.db"
+}
+
+model ServerConfig {
+  id Int @id @default(autoincrement())
+  serverId String
+  permission String @default("OWNER")
+  permissionRoleId String?
+  titleFormat String @default("ROMAJI")
+}
+
+model WatchConfig {
+  channelId String
+  anilistId Int
+  pingRole String?
+  createThreads Boolean @default(false)
+  threadArchiveTime Int @default(60)
+
+  @@id([ channelId, anilistId ])
+}

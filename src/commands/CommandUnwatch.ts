@@ -1,5 +1,6 @@
-import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
-import { ServerConfig } from "../Model";
+import { PrismaClient } from "@prisma/client";
+import { Client, CommandInteraction } from "discord.js";
+import { TitleFormat } from "../Model";
 import { query, getMediaId, getTitle } from "../Util";
 import Command from "./Command";
 
@@ -25,7 +26,7 @@ export default class CommandWatch extends Command {
     });
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>) {
+  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient) {
     const value = interaction.options.getString("anime");
     const channel = interaction.options.getChannel("channel") || interaction.channel;
    
@@ -46,21 +47,19 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    const serverConfig = this.getServerConfig(data, interaction.guildId);
-    const watchConfig = serverConfig.watching.find(w => w.anilistId === anilistId && w.channelId === channel.id);
-    if (!watchConfig) {
-      interaction.reply({
-        ephemeral: true,
-        content: `That anime isn't being watched in ${channel.toString()}.`
-      });
-      return false;
-    }
-
-    serverConfig.watching = serverConfig.watching.filter(w => w.anilistId !== anilistId || w.channelId !== channel.id);
+    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
+    await prisma.watchConfig.delete({
+      where: {
+        channelId_anilistId: {
+          anilistId,
+          channelId: channel.id
+        }
+      }
+    });
 
     const media = (await query("query($id: Int!) { Media(id: $id) { id title { romaji } } }", { id: anilistId })).data.Media;
     interaction.reply({
-      content: `Announcements will no longer be made for [${getTitle(media.title, serverConfig.titleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
+      content: `Announcements will no longer be made for [${getTitle(media.title, serverConfig.titleFormat as TitleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
     });
     return true;
   }

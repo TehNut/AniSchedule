@@ -1,5 +1,6 @@
-import { Client, CommandInteraction, GuildChannel, Snowflake } from "discord.js";
-import { ServerConfig, ThreadArchiveTime } from "../Model";
+import { PrismaClient } from "@prisma/client";
+import { Client, CommandInteraction } from "discord.js";
+import { ThreadArchiveTime, TitleFormat } from "../Model";
 import { scheduleAnnouncements } from "../Scheduler";
 import { query, getMediaId, getTitle } from "../Util";
 import Command from "./Command";
@@ -47,12 +48,12 @@ export default class CommandWatch extends Command {
     });
   }
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, data: Record<Snowflake, ServerConfig>) {
+  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient) {
     const value = interaction.options.getString("anime");
     const channel = interaction.options.getChannel("channel") || interaction.channel;
     const role = interaction.options.getRole("ping_role");
-    const createThreads = interaction.options.getBoolean("create_threads");
-    const threadArchiveTime: ThreadArchiveTime = interaction.options.getInteger("thread_archive");
+    const createThreads = interaction.options.getBoolean("create_threads") || false;
+    const threadArchiveTime: ThreadArchiveTime = interaction.options.getInteger("thread_archive") || ThreadArchiveTime.ONE_DAY;
     
     switch(threadArchiveTime) {
       case ThreadArchiveTime.THREE_DAYS: {
@@ -92,8 +93,15 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    const serverConfig = this.getServerConfig(data, interaction.guildId);
-    if (serverConfig.watching.find(w => w.anilistId === anilistId && w.channelId === channel.id)) {
+    const existing = await prisma.watchConfig.findFirst({
+      where: {
+        AND: [
+          { anilistId },
+          { channelId: channel.id }
+        ]
+      }
+    });
+    if (existing) {
       interaction.reply({
         ephemeral: true,
         content: `That show is already being announced in ${channel.toString()}`
@@ -101,27 +109,30 @@ export default class CommandWatch extends Command {
       return false;
     }
 
+    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
     const media = (await query("query($id: Int!) { Media(id: $id) { id status title { native romaji english } } }", { id: anilistId })).data.Media;
     if (![ "NOT_YET_RELEASED", "RELEASING" ].includes(media.status)) {
       interaction.reply({
         ephemeral: true,
-        content: `${getTitle(media.title, serverConfig.titleFormat)} is not an upcoming or currently airing anime.`
+        content: `${getTitle(media.title, serverConfig.titleFormat as TitleFormat)} is not an upcoming or currently airing anime.`
       });
       return false;
     }
 
-    serverConfig.watching.push({
-      anilistId,
-      channelId: channel.id,
-      pingRole: role ? role.id : null,
-      createThreads,
-      threadArchiveTime
+    await prisma.watchConfig.create({
+      data: {
+        anilistId,
+        channelId: channel.id,
+        pingRole: role ? role.id : null,
+        createThreads,
+        threadArchiveTime
+      }
     });
 
-    await scheduleAnnouncements([ anilistId ], Object.values(data));
+    await scheduleAnnouncements([ anilistId ], prisma);
 
     interaction.reply({
-      content: `Announcements will now be made for [${getTitle(media.title, serverConfig.titleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
+      content: `Announcements will now be made for [${getTitle(media.title, serverConfig.titleFormat as TitleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
     });
     return true;
   }

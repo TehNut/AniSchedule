@@ -1,5 +1,8 @@
+import { PrismaClient } from "@prisma/client";
+import { existsSync, readFileSync, renameSync } from "fs";
 import fetch from "node-fetch";
-import { MediaFormat, MediaTitle, ServerConfig, TitleFormat } from "./Model";
+import { DATA_PATH } from "./Constants";
+import { MediaFormat, MediaTitle, ServerConfigLegacy, ThreadArchiveTime, TitleFormat } from "./Model";
 
 export async function query(query: string, variables?: any) {
   return fetch("https://graphql.anilist.co", {
@@ -64,12 +67,13 @@ export function readableFormat(format: MediaFormat) {
   }
 }
 
-export function getUniqueMediaIds(configs: ServerConfig[]): number[] {
-  const uniqueShows = new Set<number>();
-  configs.forEach(c => {
-    c.watching.map(show => show.anilistId).forEach(id => uniqueShows.add(id));
-  });
-  return Array.from(uniqueShows);
+export async function getUniqueMediaIds(prisma: PrismaClient): Promise<number[]> {
+  return (await prisma.watchConfig.findMany({
+    select: {
+      anilistId: true
+    },
+    distinct: [ "anilistId" ]
+  })).map(r => r.anilistId);
 }
 
 export function parseTime(seconds: number) {
@@ -102,4 +106,43 @@ export function formatTime(seconds: number, appendSeconds?: boolean) {
     ret += (ret.length === 0 ? "" : " ") + time.seconds + "s";
 
   return ret;
+}
+
+export async function convertDataJson(prisma: PrismaClient) {
+  if (!existsSync(DATA_PATH)) {
+    console.log("Skipping data conversion as the old json format does not exist.")
+    return;
+  }
+
+  const data = JSON.parse(readFileSync(DATA_PATH, "utf-8")) as Record<string, ServerConfigLegacy>;
+  for (const [ serverId, serverConfig ] of Object.entries(data)) {
+    await prisma.serverConfig.create({
+      data: {
+        serverId,
+        titleFormat: serverConfig.titleFormat,
+        permission: serverConfig.permission,
+        permissionRoleId: serverConfig.permissionRoleId
+      }
+    });
+    console.log(`Converted server config for server ID ${serverId}`)
+
+    for (const watchConfig of serverConfig.watching) {
+      try {
+        await prisma.watchConfig.create({
+          data: {
+            anilistId: watchConfig.anilistId,
+            channelId: watchConfig.channelId,
+            createThreads: watchConfig.createThreads || false,
+            pingRole: watchConfig.pingRole,
+            threadArchiveTime: watchConfig.threadArchiveTime || ThreadArchiveTime.ONE_DAY
+          }
+        });
+        console.log(`Converted watch config for AniList ID ${watchConfig.anilistId} in channel ${watchConfig.channelId}`);
+      } catch (e) {
+        console.log(`Failed to convert watch config for media ${watchConfig.anilistId} in channel id ${watchConfig.channelId}: ${e.message || e}`);
+      }
+    }
+  }
+
+  renameSync(DATA_PATH, `${DATA_PATH}.old`);
 }
