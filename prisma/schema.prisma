@@ -21,6 +21,7 @@ model WatchConfig {
   pingRole String?
   createThreads Boolean @default(false)
   threadArchiveTime Int @default(60)
+  completed Boolean @default(false)
 
   @@id([ channelId, anilistId ])
 }

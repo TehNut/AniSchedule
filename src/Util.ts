@@ -69,8 +69,11 @@ export function readableFormat(format: MediaFormat) {
 
 export async function getUniqueMediaIds(prisma: PrismaClient): Promise<number[]> {
   return (await prisma.watchConfig.findMany({
+    where: {
+      completed: false
+    },
     select: {
-      anilistId: true
+      anilistId: true,
     },
     distinct: [ "anilistId" ]
   })).map(r => r.anilistId);

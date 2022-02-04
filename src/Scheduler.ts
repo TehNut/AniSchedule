@@ -133,6 +133,18 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
       console.log("Failed to create thread", e.message || e);
     }
   }
+
+    // If this is the finale, set it as completed
+  if (airing.media.episodes === airing.episode) {
+    await prisma.watchConfig.updateMany({
+      where: {
+        anilistId: airing.media.id
+      },
+      data: {
+        completed: true
+      }
+    });
+  }
 }
 
 /**
