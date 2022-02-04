@@ -91,33 +91,46 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
     },
     distinct: [ "channelId", "anilistId" ]
   });
+
+  if (announcements.length === 0) {
+    console.log(`No announcements found for media ${airing.id}`);
+    return;
+  }
+
   for (const announcement of announcements) {
     const channel = await client.channels.fetch(announcement.channelId) as TextChannel;
-    if (channel) {
-      const serverConfig = await prisma.serverConfig.findFirst({
-        rejectOnNotFound: true,
-        where: {
-          serverId: channel.guildId
-        }
-      });
-      if (serverConfig) {
-        const roleMention = announcement.pingRole ? await channel.guild.roles.fetch(announcement.pingRole) : null;
-        const message = await channel.send({
-          content: roleMention ? `<@&${roleMention.id}>` : undefined,
-          embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat as TitleFormat) ]
-        });
-        console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
-        try {
-          if (announcement.createThreads) {
-            message.startThread({
-              name: `${getTitle(airing.media.title, serverConfig.titleFormat as TitleFormat)} Episode ${airing.episode} Discussion`,
-              autoArchiveDuration: announcement.threadArchiveTime as ThreadArchiveTime
-            });
-          }
-        } catch (e) {
-          console.log("Failed to create thread", e.message || e);
-        }
+    if (!channel) {
+      console.log(`Failed to fetch channel ${announcement.channelId}`);
+      continue;
+    }
+
+    const serverConfig = await prisma.serverConfig.findFirst({
+      rejectOnNotFound: true,
+      where: {
+        serverId: channel.guildId
       }
+    });
+
+    if (!serverConfig) {
+      console.log(`Failed to get server config for server ${channel.guildId}`);
+      continue;
+    }
+    
+    const roleMention = announcement.pingRole ? await channel.guild.roles.fetch(announcement.pingRole) : null;
+    const message = await channel.send({
+      content: roleMention ? `<@&${roleMention.id}>` : undefined,
+      embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat as TitleFormat) ]
+    });
+    console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
+    try {
+      if (announcement.createThreads) {
+        message.startThread({
+          name: `${getTitle(airing.media.title, serverConfig.titleFormat as TitleFormat)} Episode ${airing.episode} Discussion`,
+          autoArchiveDuration: announcement.threadArchiveTime as ThreadArchiveTime
+        });
+      }
+    } catch (e) {
+      console.log("Failed to create thread", e.message || e);
     }
   }
 }
@@ -131,14 +144,20 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
  */
 export function createAnnouncementEmbed(airing: AiringSchedule, titleFormat: TitleFormat): MessageEmbed {
   const embed = new MessageEmbed()
-    .setAuthor("AniList", "https://anilist.co/img/logo_al.png", "https://anilist.co/")
+    .setAuthor({
+      name: "AniList",
+      iconURL: "https://anilist.co/img/logo_al.png",
+      url: "https://anilist.co/"
+    })
     .setColor(airing.media.coverImage.color || 43775)
     .setDescription(`Episode ${airing.episode} of [${getTitle(airing.media.title, titleFormat)}](${airing.media.siteUrl}) has just aired.${airing.media.episodes === airing.episode ? " This is the season finale." : ""}`)
     .setTimestamp(airing.airingAt * 1000)
-    .setFooter([ 
-      airing.media.episodes ? `${airing.media.episodes} Episodes` : "", 
-      `Format: ${readableFormat(airing.media.format)}`,
-    ].filter(s => s.length > 0).join(" • "))
+    .setFooter({
+      text: [ 
+        airing.media.episodes ? `${airing.media.episodes} Episodes` : "", 
+        `Format: ${readableFormat(airing.media.format)}`,
+      ].filter(s => s.length > 0).join(" • "),
+    })
     .setThumbnail(airing.media.coverImage.large)
 
   const allowedExternalLinks = airing.media.externalLinks.filter(l => {
