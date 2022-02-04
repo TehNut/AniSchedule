@@ -148,4 +148,41 @@ export async function convertDataJson(prisma: PrismaClient) {
   }
 
   renameSync(DATA_PATH, `${DATA_PATH}.old`);
+
+  await checkCompletion(prisma);
+}
+
+async function checkCompletion(prisma: PrismaClient, page: number = 1) {
+  const ids = (await prisma.watchConfig.findMany({
+    where: {
+      completed: false
+    },
+    select: {
+      anilistId: true
+    },
+    distinct: [ "anilistId" ]
+  })).map(r => r.anilistId);
+  const result = await query("query ($page: Int, $ids: [Int!]) { Page(page: $page) { pageInfo { hasNextPage } media(id_in: $ids) { id status } } }", {
+    page,
+    ids: ids
+  }).then(res => res.data.Page);
+
+  const media: { id: number, status: string }[] = result.media;
+
+  for (const m of media) {
+    if (m.status === "FINISHED" || m.status === "CANCELLED") {
+      const updated = await prisma.watchConfig.updateMany({
+        where: {
+          anilistId: m.id
+        },
+        data: {
+          completed: true
+        }
+      });
+      console.log(`Updated ${updated.count} configs for ID ${m.id}`);
+    }
+  }
+
+  if (result.pageInfo.hasNextPage)
+    await checkCompletion(prisma, page + 1);
 }
