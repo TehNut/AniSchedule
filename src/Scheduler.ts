@@ -87,13 +87,13 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
 export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSchedule) {
   const announcements = await prisma.watchConfig.findMany({
     where: {
-      anilistId: airing.id
+      anilistId: airing.media.id
     },
     distinct: [ "channelId", "anilistId" ]
   });
 
   if (announcements.length === 0) {
-    console.log(`No announcements found for media ${airing.id}`);
+    console.log(`No announcements found for media ${airing.media.id}`);
     return;
   }
 
