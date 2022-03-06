@@ -49,5 +49,5 @@ export const STREAMING_SITES: StreamSite[] = [
   { name: "Hulu", icon: iconIds[5] }, 
   { name: "Netflix", icon: iconIds[6] }, 
   { name: "VRV", icon: iconIds[7] },
-  { name: "Youtube", icon: iconIds[8], filter: ({ url }) => url.includes("/playlist") },
+  { name: "YouTube", icon: iconIds[8], filter: ({ url }) => url.includes("/playlist") },
 ];
