@@ -45,9 +45,11 @@ export const STREAMING_SITES: StreamSite[] = [
   { name: "AnimeLab", icon: iconIds[1] }, 
   { name: "Crunchyroll", icon: iconIds[2] }, 
   { name: "Funimation", icon: iconIds[3] },
-  { name: "Hidive", icon: iconIds[4] }, 
+  { name: "HIDIVE", icon: iconIds[4] }, 
   { name: "Hulu", icon: iconIds[5] }, 
   { name: "Netflix", icon: iconIds[6] }, 
   { name: "VRV", icon: iconIds[7] },
   { name: "YouTube", icon: iconIds[8], filter: ({ url }) => url.includes("/playlist") },
+  { name: "Bilibili TV", icon: iconIds[9] },
+  { name: "iQIYI", icon: iconIds[10] },
 ];
