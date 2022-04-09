@@ -87,6 +87,34 @@ client.on("ready", async () => {
   }
 });
 
+// Setup new server
+client.on("guildCreate", async guild => {
+  await guild.commands.permissions.add({
+    command: commandIds["permission"].command,
+    permissions: [
+      {
+        id: guild.ownerId,
+        type: "USER",
+        permission: true
+      }
+    ]
+  });
+  try {
+    await prisma.serverConfig.create({
+      data: {
+        serverId: guild.id,
+        permission: "OWNER",
+        permissionRoleId: null,
+        titleFormat: "ROMAJI"
+      }
+    });
+  } catch (e) {
+    logger.error("Failed to create default server configuration: ", e)
+  }
+
+  logger.info(`Joined new server: ${guild.name}`);
+});
+
 client.on("error", e => {
   logger.error("Error occurred", e);
 
