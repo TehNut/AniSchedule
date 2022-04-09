@@ -6,6 +6,7 @@ import { SCHEDULE_QUERY, SET_ACTIVITY, STREAMING_SITES } from "./Constants";
 import { PrismaClient } from "@prisma/client";
 
 const announcementTimouts: NodeJS.Timeout[] = [];
+let queuedIds: number[] = [];
 
 export async function initScheduler(prisma: PrismaClient) {
   // Clear any remaining announcements since we're about to remake them all
@@ -33,7 +34,7 @@ export async function initScheduler(prisma: PrismaClient) {
  * Schedules announcements for the given media IDs so long as they have episodes airing in the given time window.
  * 
  * @param mediaIds The AniList IDs of the media
- * @param serverConfigs An array of all the server configs
+ * @param prisma An instance of {@link PrismaClient}
  * @param startTime The start of the time window in ms
  * @param endTime The end of the time window in ms
  */
@@ -43,6 +44,7 @@ export async function scheduleAnnouncements(mediaIds: number[], prisma: PrismaCl
     console.log(`Scheduled announcement for ${e.media.title.romaji} at ${new Date(e.airingAt * 1000)}`);
     const timeout = setTimeout(() => sendAnnouncement(prisma, e), e.timeUntilAiring * 1000);
     announcementTimouts.push(timeout);
+    queuedIds.push(e.id);
   });
 }
 
@@ -85,6 +87,11 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
  * @param airing The airing schedule to announce
  */
 export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSchedule) {
+  if (!queuedIds.includes(airing.media.id)) {
+    console.log(`Attempted to send an announcement for an ${airing.media.title.romaji} which is not in the queue. Skipping...`);
+    return;
+  }
+
   const announcements = await prisma.watchConfig.findMany({
     where: {
       anilistId: airing.media.id
@@ -134,7 +141,10 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
     }
   }
 
-    // If this is the finale, set it as completed
+  // Remove the AniList ID from the queue to prevent duplicate announcements
+  queuedIds = queuedIds.filter(id => id !== airing.media.id);
+
+  // If this is the finale, set it as completed
   if (airing.media.episodes === airing.episode) {
     await prisma.watchConfig.updateMany({
       where: {
