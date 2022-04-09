@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { existsSync, readFileSync, renameSync } from "fs";
 import fetch from "node-fetch";
+import { logger } from "./AniSchedule";
 import { DATA_PATH } from "./Constants";
 import { MediaFormat, MediaTitle, ServerConfigLegacy, ThreadArchiveTime, TitleFormat } from "./Model";
 
@@ -41,7 +42,7 @@ export async function getMediaId(input: string): Promise<number | null> {
 
   return await query("query($malId: Int) { Media(idMal: $malId) { id } }", { malId: match[1] }).then(res => {
     if (res.errors) {
-      console.log(JSON.stringify(res.errors));
+      logger.error(JSON.stringify(res.errors));
       return;
     }
 
@@ -113,7 +114,7 @@ export function formatTime(seconds: number, appendSeconds?: boolean) {
 
 export async function convertDataJson(prisma: PrismaClient) {
   if (!existsSync(DATA_PATH)) {
-    console.log("Skipping data conversion as the old json format does not exist.")
+    logger.info("Skipping data conversion as the old json format does not exist.")
     return;
   }
 
@@ -127,7 +128,7 @@ export async function convertDataJson(prisma: PrismaClient) {
         permissionRoleId: serverConfig.permissionRoleId
       }
     });
-    console.log(`Converted server config for server ID ${serverId}`)
+    logger.info(`Converted server config for server ID ${serverId}`)
 
     for (const watchConfig of serverConfig.watching) {
       try {
@@ -140,9 +141,9 @@ export async function convertDataJson(prisma: PrismaClient) {
             threadArchiveTime: watchConfig.threadArchiveTime || ThreadArchiveTime.ONE_DAY
           }
         });
-        console.log(`Converted watch config for AniList ID ${watchConfig.anilistId} in channel ${watchConfig.channelId}`);
+        logger.info(`Converted watch config for AniList ID ${watchConfig.anilistId} in channel ${watchConfig.channelId}`);
       } catch (e) {
-        console.log(`Failed to convert watch config for media ${watchConfig.anilistId} in channel id ${watchConfig.channelId}: ${e.message || e}`);
+        logger.error(`Failed to convert watch config for media ${watchConfig.anilistId} in channel id ${watchConfig.channelId}: ${e.message || e}`);
       }
     }
   }
@@ -179,7 +180,7 @@ async function checkCompletion(prisma: PrismaClient, page: number = 1) {
           completed: true
         }
       });
-      console.log(`Updated ${updated.count} configs for ID ${m.id}`);
+      logger.info(`Updated ${updated.count} configs for ID ${m.id}`);
     }
   }
 

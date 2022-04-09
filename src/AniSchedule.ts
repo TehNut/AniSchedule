@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 config();
 import { ApplicationCommand, Client, CommandInteraction, Intents, MessageComponentInteraction, Snowflake } from "discord.js";
+import { createLogger, transports, format } from "winston";
 import { BOT_TOKEN, DEV_SERVER_ID, MODE, SET_ACTIVITY } from "./Constants";
 import { commands } from "./commands/Command";
 import CommandWatch from "./commands/CommandWatch";
@@ -29,12 +30,32 @@ const prisma = new PrismaClient();
 export const client = new Client({
   intents: [ Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES ]
 });
+export const logger = createLogger({
+  level: MODE === "DEV" ? "debug" : "info",
+  levels: {
+    error: 0,
+    warn: 1,
+    info: 2,
+    http: 3,
+    debug: 4,
+    verbose: 5,
+    silly: 6
+  },
+  transports: new transports.Console({
+    format: format.combine(
+      format.colorize(),
+      format.timestamp(),
+      format.align(),
+      format.printf(info => `[${info.timestamp}] [${info.level}] ${info.message}`)
+    )
+  })
+});
 
 async function init() {
   await convertDataJson(prisma); // TODO remove
   await initScheduler(prisma);
   await client.login(BOT_TOKEN);
-  console.log(`Logged in as ${client.user.username}#${client.user.discriminator}`);
+  logger.info(`Logged in as ${client.user.username}#${client.user.discriminator}`);
 }
 
 client.on("ready", async () => {
@@ -67,14 +88,14 @@ client.on("ready", async () => {
 });
 
 client.on("error", e => {
-  console.log("Error occurred", e);
+  logger.error("Error occurred", e);
 
   // Make sure we stay logged in if we disconnect
   client.login(BOT_TOKEN)
 });
 
 process.on("unhandledRejection", e => {
-  console.log("Error occurred", e);
+  logger.error("Error occurred", e);
   
   // Make sure we stay logged in if we disconnect
   client.login(BOT_TOKEN);
@@ -96,14 +117,14 @@ client.on("interactionCreate", async interaction => {
     if (interaction.isMessageComponent())
       await handleMessageComponents(interaction);
   } catch (e) {
-    console.error("Error handing interaction", e);
+    logger.error("Error handing interaction", e);
   }
 });
 
 async function handleCommands(interaction: CommandInteraction) {
   const command = commands.find(c => c.data.name === interaction.commandName);
   if (!command) {
-    console.error(`Discord has passed unknown command "${interaction.commandName}" to us.`);
+    logger.warn(`Discord has passed unknown command "${interaction.commandName}" to us.`);
     return;
   }
 

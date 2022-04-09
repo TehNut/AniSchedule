@@ -1,7 +1,7 @@
 import { MessageEmbed, TextChannel } from "discord.js";
 import { AiringSchedule, ThreadArchiveTime, TitleFormat } from "./Model";
 import { getTitle, getUniqueMediaIds, query, readableFormat } from "./Util";
-import { client } from "./AniSchedule";
+import { client, logger } from "./AniSchedule";
 import { SCHEDULE_QUERY, SET_ACTIVITY, STREAMING_SITES } from "./Constants";
 import { PrismaClient } from "@prisma/client";
 
@@ -41,7 +41,7 @@ export async function initScheduler(prisma: PrismaClient) {
 export async function scheduleAnnouncements(mediaIds: number[], prisma: PrismaClient, startTime: number = Date.now(), endTime: number = Date.now() + (24 * 60 * 60 * 1000)) {
   const upcomingEpisodes = await getUpcomingEpisodes(mediaIds, startTime, endTime);
   upcomingEpisodes.forEach(e => {
-    console.log(`Scheduled announcement for ${e.media.title.romaji} at ${new Date(e.airingAt * 1000)}`);
+    logger.info(`Scheduled announcement for ${e.media.title.romaji} at ${new Date(e.airingAt * 1000)}`);
     const timeout = setTimeout(() => sendAnnouncement(prisma, e), e.timeUntilAiring * 1000);
     announcementTimouts.push(timeout);
     queuedIds.push(e.id);
@@ -83,12 +83,12 @@ export async function getUpcomingEpisodes(mediaIds: number[], startTime: number,
 /**
  * Sends an episode announcement to all channels watching the the show
  * 
- * @param serverConfigs An array of all the server configs
+ * @param prisma An instance of {@link PrismaClient}
  * @param airing The airing schedule to announce
  */
 export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSchedule) {
   if (!queuedIds.includes(airing.media.id)) {
-    console.log(`Attempted to send an announcement for an ${airing.media.title.romaji} which is not in the queue. Skipping...`);
+    logger.error(`Attempted to send an announcement for an ${airing.media.title.romaji} which is not in the queue. Skipping...`);
     return;
   }
 
@@ -100,14 +100,14 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
   });
 
   if (announcements.length === 0) {
-    console.log(`No announcements found for media ${airing.media.id}`);
+    logger.warn(`No announcements found for media ${airing.media.id}`);
     return;
   }
 
   for (const announcement of announcements) {
     const channel = await client.channels.fetch(announcement.channelId) as TextChannel;
     if (!channel) {
-      console.log(`Failed to fetch channel ${announcement.channelId}`);
+      logger.error(`Failed to fetch channel ${announcement.channelId}`);
       continue;
     }
 
@@ -119,7 +119,7 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
     });
 
     if (!serverConfig) {
-      console.log(`Failed to get server config for server ${channel.guildId}`);
+      logger.error(`Failed to get server config for server ${channel.guildId}`);
       continue;
     }
     
@@ -128,7 +128,7 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
       content: roleMention ? `<@&${roleMention.id}>` : undefined,
       embeds: [ createAnnouncementEmbed(airing, serverConfig.titleFormat as TitleFormat) ]
     });
-    console.log(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
+    logger.info(`Sent announcement for ${airing.media.title.romaji} to ${channel.guild.name}#${channel.name}`);
     try {
       if (announcement.createThreads) {
         message.startThread({
@@ -137,7 +137,7 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
         });
       }
     } catch (e) {
-      console.log("Failed to create thread", e.message || e);
+      logger.error("Failed to create thread", e.message || e);
     }
   }
 
@@ -154,6 +154,7 @@ export async function sendAnnouncement(prisma: PrismaClient, airing: AiringSched
         completed: true
       }
     });
+    logger.info(`Detected final episode of ${airing.media.title.romaji}, marking as complete.`);
   }
 }
 
