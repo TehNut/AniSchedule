@@ -44,7 +44,7 @@ export async function scheduleAnnouncements(mediaIds: number[], prisma: PrismaCl
     logger.info(`Scheduled announcement for ${e.media.title.romaji} at ${new Date(e.airingAt * 1000)}`);
     const timeout = setTimeout(() => sendAnnouncement(prisma, e), e.timeUntilAiring * 1000);
     announcementTimouts.push(timeout);
-    queuedIds.push(e.id);
+    queuedIds.push(e.media.id);
   });
 }
 
