@@ -1,9 +1,8 @@
-import { PrismaClient } from "@prisma/client";
-import { Client, CommandInteraction, MessageActionRow, MessageSelectMenu, MessageComponentInteraction } from "discord.js";
+import { MessageActionRow, MessageSelectMenu } from "discord.js";
 import { AiringSchedule, TitleFormat } from "../Model";
 import { createAnnouncementEmbed, getUpcomingEpisodes } from "../Scheduler";
 import { formatTime, getTitle, query } from "../Util";
-import Command from "./Command";
+import { Command, getServerConfig } from "./Command";
 
 const singleEpisodeQuery = `query ($airingId: Int) {
   AiringSchedule(id: $airingId) {
@@ -33,24 +32,10 @@ const singleEpisodeQuery = `query ($airingId: Int) {
   }
 }`;
 
-export default class CommandUpcoming extends Command {
-
-  constructor() {
-    super({
-      name: "upcoming",
-      description: "Lists upcoming episodes",
-      options: [
-        {
-          name: "days",
-          description: "How many days ahead you'd like to see. Defaults to 1 day. Max 7 days.",
-          type: "INTEGER",          
-        }
-      ]
-    });
-  }
-
-  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
-    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
+const command: Command = {
+  name: "upcoming",
+  async handleInteraction(client, interaction, prisma) {
+    const serverConfig = await getServerConfig(prisma, interaction.guildId);
     const startTime = Date.now();
     let days = interaction.options.getInteger("days") || 1;
     if (days > 7)
@@ -94,18 +79,22 @@ export default class CommandUpcoming extends Command {
       actionRow.addComponents([ selector ]);
     }
 
-    const embed = createAnnouncementEmbed(upcoming[0], serverConfig.titleFormat as TitleFormat);
-    embed.setDescription(`Episode ${upcoming[0].episode} of [${getTitle(upcoming[0].media.title, serverConfig.titleFormat as TitleFormat)}](${upcoming[0].media.siteUrl}) will air in ${formatTime(upcoming[0].timeUntilAiring)}.`);
+    try {
+      const embed = createAnnouncementEmbed(upcoming[0], serverConfig.titleFormat as TitleFormat);
+      embed.setDescription(`Episode ${upcoming[0].episode} of [${getTitle(upcoming[0].media.title, serverConfig.titleFormat as TitleFormat)}](${upcoming[0].media.siteUrl}) will air in ${formatTime(upcoming[0].timeUntilAiring)}.`);
 
-    interaction.reply({
-      embeds: [ embed ],
-      components: actionRow.components.length > 0 ? [ actionRow ] : undefined,
-      ephemeral: true
-    });
+      await interaction.reply({
+        embeds: [ embed ],
+        components: actionRow.components.length > 0 ? [ actionRow ] : undefined,
+        ephemeral: true
+      });
+    } catch (e) {
+      console.log(e)
+    }
+
     return false;
-  }
-
-  async handleMessageComponents(client: Client, componentInteraction: MessageComponentInteraction, prisma: PrismaClient): Promise<boolean> {
+  },
+  async handleMessageComponents(client, componentInteraction, prisma) {
     const serverConfig = await this.getServerConfig(prisma, componentInteraction.guildId);
     if (componentInteraction.isSelectMenu() && componentInteraction.customId === "episode-selector") {
       const airingId = parseInt(componentInteraction.values[0]);
@@ -118,4 +107,6 @@ export default class CommandUpcoming extends Command {
     }
     return false;
   }
-}
+};
+
+export default command;

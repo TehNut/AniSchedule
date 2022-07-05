@@ -188,13 +188,13 @@ export function createAnnouncementEmbed(airing: AiringSchedule, titleFormat: Tit
     return streamingsite && (!streamingsite.filter || streamingsite.filter(l));
   });
   if (allowedExternalLinks.length > 0) {
-    embed.addField("Streams", allowedExternalLinks.map(l => {
+    embed.addFields({ name: "Streams", value: allowedExternalLinks.map(l => {
       const streamSite = STREAMING_SITES.find(s => s.name === l.site);
       return `${streamSite.icon ? streamSite.icon : ""} [${l.site}](${l.url})`
-    }).join(" | "));
-    embed.addField("Notice", "It may take some time for this episode to appear on the above streaming service(s).");
+    }).join(" | ")});
+    embed.addFields({ name: "Notice", value: "It may take some time for this episode to appear on the above streaming service(s)." });
   } else
-    embed.addField("Streams", "No licensed streaming links available");
+    embed.addFields({ name: "Streams", value: "No licensed streaming links available" });
 
   return embed;
 }

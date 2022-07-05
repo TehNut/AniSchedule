@@ -1,57 +1,14 @@
-import { PrismaClient } from "@prisma/client";
-import { Client, CommandInteraction } from "discord.js";
 import { ThreadArchiveTime, TitleFormat } from "../Model";
 import { scheduleAnnouncements } from "../Scheduler";
 import { query, getMediaId, getTitle } from "../Util";
-import Command from "./Command";
+import { Command, getServerConfig } from "./Command";
 
-export default class CommandWatch extends Command {
-  constructor() {
-    super({
-      name: "watch",
-      description: "Adds a new anime to be announced.",
-      defaultPermission: false,
-      options: [
-        {
-          name: "anime",
-          description: "This can be an AniList ID, AniList URL, or MyAnimeListURL",
-          type: "STRING",
-          required: true
-        },
-        {
-          name: "channel",
-          description: "The channel to make the announcements in. Defaults to current channel",
-          type: "CHANNEL"
-        },
-        {
-          name: "ping_role",
-          description: "A role to ping when the announcement is made.",
-          type: "ROLE"
-        },
-        {
-          name: "create_threads",
-          description: "Should discussion threads be created for each episode. Defaults to false.",
-          type: "BOOLEAN"
-        },
-        {
-          name: "thread_archive",
-          description: "How long after the last message before the thread is archived. [1 day]",
-          type: "INTEGER",
-          choices: [
-            { name: "1 Hour", value: ThreadArchiveTime.ONE_HOUR },
-            { name: "1 Day", value: ThreadArchiveTime.ONE_DAY },
-            { name: "3 Days", value: ThreadArchiveTime.THREE_DAYS },
-            { name: "7 days", value: ThreadArchiveTime.SEVEN_DAYS },
-          ]
-        }
-      ]
-    });
-  }
-
-  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient) {
+const command: Command = {
+  name: "watch",
+  async handleInteraction(client, interaction, prisma) {
     const value = interaction.options.getString("anime");
     const channel = interaction.options.getChannel("channel") || interaction.channel;
-    const role = interaction.options.getRole("ping_role");
+    const role = interaction.options.getRole("mention_role");
     const createThreads = interaction.options.getBoolean("create_threads") || false;
     const threadArchiveTime: ThreadArchiveTime = interaction.options.getInteger("thread_archive") || ThreadArchiveTime.ONE_DAY;
     
@@ -109,7 +66,7 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
+    const serverConfig = await getServerConfig(prisma, interaction.guildId);
     const media = (await query("query($id: Int!) { Media(id: $id) { id status title { native romaji english } } }", { id: anilistId })).data.Media;
     if (![ "NOT_YET_RELEASED", "RELEASING" ].includes(media.status)) {
       interaction.reply({
@@ -135,5 +92,7 @@ export default class CommandWatch extends Command {
       content: `Announcements will now be made for [${getTitle(media.title, serverConfig.titleFormat as TitleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
     });
     return true;
-  }
-}
+  },
+};
+
+export default command;

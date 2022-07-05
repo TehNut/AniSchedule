@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { Client, CommandInteraction } from "discord.js";
 import { TitleFormat } from "../Model";
 import { formatTime, getTitle, query } from "../Util";
-import Command from "./Command";
+import { Command, getServerConfig } from "./Command";
 
 const watchingQuery = `query($ids: [Int]!, $page: Int) {
   Page(page: $page) {
@@ -24,24 +22,24 @@ const watchingQuery = `query($ids: [Int]!, $page: Int) {
   }
 }`.trim();
 
-export default class CommandWatching extends Command {
-  constructor() {
-    super({
-      name: "watching",
-      description: "Lists the anime announcements for a channel",
-      options: [
-        {
-          name: "channel",
-          description: "The channel to check announcements for. Defaults to current channel",
-          type: "CHANNEL"
-        }
-      ]
-    })
-  }
+function createEmbed(description: string) {
+  return [{
+    title: "Current Announcements",
+    color: 4044018,
+    author: {
+      name: "AniList",
+      url: "https://anilist.co",
+      icon_url: "https://anilist.co/img/logo_al.png"
+    },
+    description
+  }];
+}
 
-  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
+const command: Command = {
+  name: "watching",
+  async handleInteraction(client, interaction, prisma) {
     const channel = interaction.options.getChannel("channel") || interaction.channel;
-    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
+    const serverConfig = await getServerConfig(prisma, interaction.guildId);
     const watching = (await prisma.watchConfig.findMany({
       where: {
         channelId: channel.id
@@ -78,18 +76,7 @@ export default class CommandWatching extends Command {
     }
 
     return false;
-  }
-}
+  },
+};
 
-function createEmbed(description: string) {
-  return [{
-    title: "Current Announcements",
-    color: 4044018,
-    author: {
-      name: "AniList",
-      url: "https://anilist.co",
-      icon_url: "https://anilist.co/img/logo_al.png"
-    },
-    description
-  }];
-}
+export default command;

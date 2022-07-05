@@ -6,20 +6,24 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only --rs ./src/AniSchedule.ts",
     "build": "npx rimraf ./build && tsc",
-    "run": "node ./build/AniSchedule.js"
+    "run": "node ./build/AniSchedule.js",
+    "deploy:commands": "ts-node-dev ./src/DeployCommands.ts"
   },
   "dependencies": {
+    "@discordjs/builders": "0.16.0-dev.1656979757-5bd6b28",
+    "@discordjs/rest": "0.5.0",
     "@prisma/client": "3.9.1",
-    "discord.js": "13.6.0",
-    "dotenv": "16.0.0",
+    "discord-api-types": "0.36.1",
+    "discord.js": "13.8.1",
+    "dotenv": "16.0.1",
     "node-fetch": "2.6.1",
-    "winston": "^3.7.2"
+    "winston": "3.8.1"
   },
   "devDependencies": {
     "@types/node": "17.0.14",
-    "@types/node-fetch": "2.5.12",
+    "@types/node-fetch": "2.6.2",
     "prisma": "3.9.1",
     "ts-node-dev": "1.1.8",
-    "typescript": "4.5.5"
+    "typescript": "4.7.4"
   }
 }

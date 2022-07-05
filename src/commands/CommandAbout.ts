@@ -1,30 +1,22 @@
-import { Client, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
-import Command from "./Command";
+import { MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
+import { Command } from "./Command";
 import { version } from "../../package.json";
 import { formatTime } from "../Util";
-import { PrismaClient } from "@prisma/client";
 
 const startedAt = Math.floor(Date.now() / 1000);
 
-export default class CommandAbout extends Command {
-
-  constructor() {
-    super({
-      name: "about",
-      description: "Displays information about this bot."
-    });
-  }
-
-  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient): Promise<boolean> {
+const command: Command = {
+  name: "about",
+  handleInteraction(client, interaction, prisma) {
     interaction.reply({
       ephemeral: true,
       embeds: [ 
         new MessageEmbed()
           .setTitle(`${client.user.username} v${version}`)
-          .setAuthor(client.user.username, client.user.avatarURL())
+          .setAuthor({ name: client.user.username, iconURL: client.user.avatarURL()})
           .setColor(43775)
           .setDescription("Anime episode airing announcements based on the **[AniList](https://anilist.co)** airing schedule.")
-          .setFooter(`Uptime: ${formatTime(Math.floor(Date.now() / 1000) - startedAt, true)}`)
+          .setFooter({ text: `Uptime: ${formatTime(Math.floor(Date.now() / 1000) - startedAt, true)}` })
       ],
       components: [
         new MessageActionRow({
@@ -44,5 +36,7 @@ export default class CommandAbout extends Command {
       ]
     });
     return false;
-  }
+  },
 }
+
+export default command;

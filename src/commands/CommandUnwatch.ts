@@ -1,32 +1,10 @@
-import { PrismaClient } from "@prisma/client";
-import { Client, CommandInteraction } from "discord.js";
 import { TitleFormat } from "../Model";
 import { query, getMediaId, getTitle } from "../Util";
-import Command from "./Command";
+import { Command, getServerConfig } from "./Command";
 
-export default class CommandWatch extends Command {
-  constructor() {
-    super({
-      name: "unwatch",
-      description: "Removes an anime announcement.",
-      defaultPermission: false,
-      options: [
-        {
-          name: "anime",
-          description: "This can be an AniList ID, AniList URL, or MyAnimeListURL",
-          type: "STRING",
-          required: true
-        },
-        {
-          name: "channel",
-          description: "The channel to remove the announcements from. Defaults to current channel",
-          type: "CHANNEL"
-        }
-      ]
-    });
-  }
-
-  async handleInteraction(client: Client, interaction: CommandInteraction, prisma: PrismaClient) {
+const command: Command = {
+  name: "unwatch",
+  async handleInteraction(client, interaction, prisma) {
     const value = interaction.options.getString("anime");
     const channel = interaction.options.getChannel("channel") || interaction.channel;
    
@@ -47,7 +25,7 @@ export default class CommandWatch extends Command {
       return false;
     }
 
-    const serverConfig = await this.getServerConfig(prisma, interaction.guildId);
+    const serverConfig = await getServerConfig(prisma, interaction.guildId);
     await prisma.watchConfig.delete({
       where: {
         channelId_anilistId: {
@@ -62,5 +40,7 @@ export default class CommandWatch extends Command {
       content: `Announcements will no longer be made for [${getTitle(media.title, serverConfig.titleFormat as TitleFormat)}](https://anilist.co/anime/${media.id}) in ${channel.toString()}.`
     });
     return true;
-  }
-}
+  },
+};
+
+export default command;
